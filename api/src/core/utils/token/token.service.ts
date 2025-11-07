@@ -11,6 +11,28 @@ export class TokenService {
     private readonly config: ConfigService,
   ) {}
 
+  async generateAccessToken(payload: TokenPayload): Promise<string> {
+    return this.jwtService.signAsync(payload, {
+      secret: this.config.getOrThrow(Environment.JWT_ACCESS_SECRET),
+      expiresIn: this.config.getOrThrow(Environment.JWT_ACCESS_EXPIRES_IN),
+    });
+  }
+
+  async generateRefreshToken(payload: TokenPayload): Promise<string> {
+    return this.jwtService.signAsync(payload, {
+      secret: this.config.getOrThrow(Environment.JWT_REFRESH_SECRET),
+      expiresIn: this.config.getOrThrow(Environment.JWT_REFRESH_EXPIRES_IN),
+    });
+  }
+
+  async getAccessTokenExpiresIn(): Promise<string> {
+    return this.config.getOrThrow(Environment.JWT_ACCESS_EXPIRES_IN);
+  }
+
+  async getRefreshTokenExpiresIn(): Promise<string> {
+    return this.config.getOrThrow(Environment.JWT_REFRESH_EXPIRES_IN);
+  }
+
   async generateToken(payload: TokenPayload): Promise<TokenResponse> {
     const [access_token, refresh_token] = await Promise.all([
       this.jwtService.signAsync(payload, {

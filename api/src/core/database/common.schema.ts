@@ -1,8 +1,13 @@
 import { Prop, Schema } from '@nestjs/mongoose';
-import { Document } from 'mongoose';
+import { Types } from 'mongoose';
 
 @Schema({ timestamps: true })
-export class CommonSchema extends Document {
+export class CommonSchema {
+  _id: Types.ObjectId;
+
   @Prop({ type: Date, default: null })
   deletedAt?: Date | null;
+
+  createdAt?: Date;
+  updatedAt?: Date;
 }

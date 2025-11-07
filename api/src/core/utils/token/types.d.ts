@@ -1,7 +1,11 @@
 export interface TokenPayload {
   id: string;
   email: string;
-  sessionId: string;
+  sessionId?: string;
+}
+
+export interface RefreshTokenPayload extends TokenPayload {
+  refresh_token: string;
 }
 
 export interface TokenResponse {

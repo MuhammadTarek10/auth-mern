@@ -44,7 +44,7 @@ export abstract class BaseRepository<T> {
     }
   }
 
-  async create(data: T): Promise<T> {
+  async create(data: Partial<T>): Promise<T> {
     try {
       return await this.model.create(data);
     } catch (error) {

@@ -6,6 +6,9 @@ import { AuthController } from './auth.controller';
 import { AuthService } from './auth.service';
 import { Session, SessionSchema } from './schemas/session.schema';
 import { SessionRepository } from './session.repository';
+import { JwtStrategy } from './strategies/jwt.strategy';
+import { LocalStrategy } from './strategies/local.strategy';
+import { RefreshTokenStrategy } from './strategies/refresh.strategy';
 
 @Module({
   imports: [
@@ -13,7 +16,13 @@ import { SessionRepository } from './session.repository';
     MongooseModule.forFeature([{ name: Session.name, schema: SessionSchema }]),
     UsersModule,
   ],
-  providers: [AuthService, SessionRepository],
+  providers: [
+    AuthService,
+    SessionRepository,
+    LocalStrategy,
+    JwtStrategy,
+    RefreshTokenStrategy,
+  ],
   controllers: [AuthController],
 })
 export class AuthModule {}
