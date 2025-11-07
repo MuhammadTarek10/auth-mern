@@ -1,6 +1,9 @@
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
 import { CommonSchema } from 'src/core/database/common.schema';
-import { AuthMethod, AuthMethodSchema } from './auth-methods.schema';
+import {
+  AuthMethod,
+  AuthMethodSchema,
+} from '../../auth/schemas/auth-methods.schema';
 
 @Schema()
 export class User extends CommonSchema {
