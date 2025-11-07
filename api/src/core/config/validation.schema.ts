@@ -9,4 +9,10 @@ export const validationSchema = z.object({
 
   // Database
   DATABASE_URL: z.string().min(1, { message: 'DATABASE_URL is required' }),
+
+  // Swagger
+  SWAGGER_USER: z.string().min(1, { message: 'SWAGGER_USER is required' }),
+  SWAGGER_PASSWORD: z
+    .string()
+    .min(1, { message: 'SWAGGER_PASSWORD is required' }),
 });
