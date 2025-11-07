@@ -1,11 +1,18 @@
 import { Body, Controller, Post, UseGuards } from '@nestjs/common';
-import { ApiBody, ApiOperation, ApiResponse } from '@nestjs/swagger';
+import {
+  ApiBearerAuth,
+  ApiBody,
+  ApiOperation,
+  ApiResponse,
+} from '@nestjs/swagger';
 import { GetUser } from 'src/core/decorators/get-user.decorator';
 import { ResponseMessage } from 'src/core/decorators/response-message.decorator';
+import type { UserWithSession } from 'src/core/utils/token/types';
 import { User } from 'src/users/schemas/user.schema';
 import { AuthService } from './auth.service';
 import { SignInDto } from './dtos/sign-in.dto';
 import { SignUpDto } from './dtos/sign-up.dto';
+import { JwtGuard } from './guards/jwt.guard';
 import { LocalGuard } from './guards/local.guard';
 
 @Controller('auth')
@@ -31,5 +38,16 @@ export class AuthController {
   @Post('sign-in')
   async signIn(@GetUser() user: User) {
     return await this.authService.signIn(user);
+  }
+
+  @ApiOperation({ summary: 'Sign out a user' })
+  @ApiResponse({ status: 200, description: 'User signed out successfully' })
+  @ApiResponse({ status: 400, description: 'Bad request' })
+  @ResponseMessage('User signed out successfully')
+  @ApiBearerAuth()
+  @UseGuards(JwtGuard)
+  @Post('sign-out')
+  async signOut(@GetUser() user: UserWithSession) {
+    return await this.authService.signOut(user);
   }
 }

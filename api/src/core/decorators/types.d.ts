@@ -1,5 +1,5 @@
-import { User } from 'src/users/schemas/user.schema';
+import { UserWithSession } from '../utils/token/types';
 
 export interface AppRequest extends Request {
-  user: User;
+  user: UserWithSession;
 }

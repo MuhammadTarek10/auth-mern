@@ -2,6 +2,7 @@ import { ConflictException, Injectable } from '@nestjs/common';
 import { Constants } from 'src/core/config/constants';
 import { HashService } from 'src/core/utils/hash.service';
 import { TokenService } from 'src/core/utils/token/token.service';
+import { UserWithSession } from 'src/core/utils/token/types';
 import { User } from 'src/users/schemas/user.schema';
 import { UsersService } from 'src/users/users.service';
 import { SignUpDto } from './dtos/sign-up.dto';
@@ -86,6 +87,10 @@ export class AuthService {
       refresh_token: refreshToken,
       expires_in: accessTokenExpiresIn,
     };
+  }
+
+  async signOut(user: UserWithSession) {
+    await this.sessionRepository.deleteSession(user.sessionId);
   }
 
   async validateUser(email: string, password: string): Promise<User | null> {

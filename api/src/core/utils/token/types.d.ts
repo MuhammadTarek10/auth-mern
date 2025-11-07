@@ -13,3 +13,7 @@ export interface TokenResponse {
   refresh_token: string;
   expires_in: string;
 }
+
+export interface UserWithSession extends User {
+  sessionId: string;
+}

@@ -33,6 +33,10 @@ export class SessionRepository extends BaseRepository<Session> {
     });
   }
 
+  async deleteSession(sessionId: string): Promise<void> {
+    await this.delete(sessionId);
+  }
+
   async deleteUserSessions(userId: string): Promise<void> {
     return this.deleteMany({ userId: new Types.ObjectId(userId) });
   }

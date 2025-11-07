@@ -3,8 +3,7 @@ import { ConfigService } from '@nestjs/config';
 import { PassportStrategy } from '@nestjs/passport';
 import { ExtractJwt, Strategy } from 'passport-jwt';
 import { Environment } from 'src/core/config/environment';
-import { TokenPayload } from 'src/core/utils/token/types';
-import { User } from 'src/users/schemas/user.schema';
+import { TokenPayload, UserWithSession } from 'src/core/utils/token/types';
 import { UsersService } from 'src/users/users.service';
 @Injectable()
 export class JwtStrategy extends PassportStrategy(Strategy, 'jwt') {
@@ -18,12 +17,10 @@ export class JwtStrategy extends PassportStrategy(Strategy, 'jwt') {
     });
   }
 
-  async validate(payload: TokenPayload): Promise<User & { sessionId: string }> {
+  async validate(payload: TokenPayload): Promise<UserWithSession> {
     const user = await this.usersService.findById(payload.id);
     if (user)
-      return { ...user, sessionId: payload.sessionId } as User & {
-        sessionId: string;
-      };
+      return { ...user, sessionId: payload.sessionId } as UserWithSession;
 
     throw new UnauthorizedException(
       'You are not authorized to access this resource',
