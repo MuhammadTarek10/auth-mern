@@ -15,4 +15,18 @@ export const validationSchema = z.object({
   SWAGGER_PASSWORD: z
     .string()
     .min(1, { message: 'SWAGGER_PASSWORD is required' }),
+
+  // JWT
+  JWT_ACCESS_SECRET: z
+    .string()
+    .min(1, { message: 'JWT_ACCESS_SECRET is required' }),
+  JWT_ACCESS_EXPIRES_IN: z
+    .string()
+    .min(1, { message: 'JWT_ACCESS_EXPIRES_IN is required' }),
+  JWT_REFRESH_SECRET: z
+    .string()
+    .min(1, { message: 'JWT_REFRESH_SECRET is required' }),
+  JWT_REFRESH_EXPIRES_IN: z
+    .string()
+    .min(1, { message: 'JWT_REFRESH_EXPIRES_IN is required' }),
 });

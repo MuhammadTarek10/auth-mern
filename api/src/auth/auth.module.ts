@@ -1,5 +1,6 @@
 import { Module } from '@nestjs/common';
 import { MongooseModule } from '@nestjs/mongoose';
+import { UtilsModule } from 'src/core/utils/utils.module';
 import { UsersModule } from 'src/users/users.module';
 import { AuthController } from './auth.controller';
 import { AuthService } from './auth.service';
@@ -8,6 +9,7 @@ import { SessionRepository } from './session.repository';
 
 @Module({
   imports: [
+    UtilsModule,
     MongooseModule.forFeature([{ name: Session.name, schema: SessionSchema }]),
     UsersModule,
   ],

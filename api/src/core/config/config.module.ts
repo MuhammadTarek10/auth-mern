@@ -2,6 +2,7 @@ import { Module } from '@nestjs/common';
 import { ConfigModule as NestConfigModule } from '@nestjs/config';
 import appConfig from './app.config';
 import databaseConfig from './database.config';
+import jwtConfig from './jwt.config';
 import swaggerConfig from './swagger.config';
 import { validationSchema } from './validation.schema';
 
@@ -18,7 +19,7 @@ import { validationSchema } from './validation.schema';
         }
         return result.data;
       },
-      load: [appConfig, databaseConfig, swaggerConfig],
+      load: [appConfig, databaseConfig, swaggerConfig, jwtConfig],
       ignoreEnvFile: process.env.NODE_ENV === 'production',
       envFilePath: `.env.${process.env.NODE_ENV}`,
     }),
