@@ -1,27 +1,42 @@
-import { FilterQuery, Model, PipelineStage, Types } from 'mongoose';
+import {
+  FilterQuery,
+  Model,
+  PipelineStage,
+  ProjectionType,
+  Types,
+} from 'mongoose';
 
 export abstract class BaseRepository<T> {
   constructor(private readonly model: Model<T>) {}
 
-  async find(query: FilterQuery<T>): Promise<T[]> {
+  async find(
+    query: FilterQuery<T>,
+    projection?: ProjectionType<T>,
+  ): Promise<T[]> {
     try {
-      return await this.model.find(query);
+      return await this.model.find(query, projection);
     } catch (error) {
       this.handleError(error);
     }
   }
 
-  async findOne(query: FilterQuery<T>): Promise<T | null> {
+  async findOne(
+    query: FilterQuery<T>,
+    projection?: ProjectionType<T>,
+  ): Promise<T | null> {
     try {
-      return await this.model.findOne(query);
+      return await this.model.findOne(query, projection);
     } catch (error) {
       this.handleError(error);
     }
   }
 
-  async findById(id: string): Promise<T | null> {
+  async findById(
+    id: string,
+    projection?: ProjectionType<T>,
+  ): Promise<T | null> {
     try {
-      return await this.model.findById(new Types.ObjectId(id));
+      return await this.model.findById(new Types.ObjectId(id), projection);
     } catch (error) {
       this.handleError(error);
     }
