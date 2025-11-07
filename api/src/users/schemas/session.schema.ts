@@ -1,5 +1,5 @@
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
-import * as mongoose from 'mongoose';
+import { Types } from 'mongoose';
 import { CommonSchema } from 'src/core/database/common.schema';
 
 @Schema({
@@ -8,12 +8,12 @@ import { CommonSchema } from 'src/core/database/common.schema';
 })
 export class Session extends CommonSchema {
   @Prop({
-    type: mongoose.Schema.Types.ObjectId,
+    type: Types.ObjectId,
     ref: 'User',
     required: true,
     index: true,
   })
-  userId: mongoose.Schema.Types.ObjectId;
+  userId: Types.ObjectId;
 
   @Prop({ required: true, index: true })
   refreshTokenHash: string;
