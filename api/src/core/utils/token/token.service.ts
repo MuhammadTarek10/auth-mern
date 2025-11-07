@@ -25,12 +25,16 @@ export class TokenService {
     });
   }
 
-  async getAccessTokenExpiresIn(): Promise<string> {
-    return this.config.getOrThrow(Environment.JWT_ACCESS_EXPIRES_IN);
+  getAccessTokenExpiresIn(): number {
+    return Number(
+      this.config.getOrThrow<number>(Environment.JWT_ACCESS_EXPIRES_IN),
+    );
   }
 
-  async getRefreshTokenExpiresIn(): Promise<string> {
-    return this.config.getOrThrow(Environment.JWT_REFRESH_EXPIRES_IN);
+  getRefreshTokenExpiresIn(): number {
+    return Number(
+      this.config.getOrThrow<number>(Environment.JWT_REFRESH_EXPIRES_IN),
+    );
   }
 
   async generateToken(payload: TokenPayload): Promise<TokenResponse> {

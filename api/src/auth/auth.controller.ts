@@ -1,10 +1,23 @@
-import { Body, Controller, Post, UseGuards } from '@nestjs/common';
 import {
+  Body,
+  Controller,
+  HttpCode,
+  HttpStatus,
+  Post,
+  UseGuards,
+} from '@nestjs/common';
+import {
+  ApiBadRequestResponse,
   ApiBearerAuth,
   ApiBody,
+  ApiCreatedResponse,
+  ApiExtraModels,
+  ApiOkResponse,
   ApiOperation,
-  ApiResponse,
+  ApiTags,
+  getSchemaPath,
 } from '@nestjs/swagger';
+import { ResponseDto } from 'src/core/common/dtos/response.dto';
 import { GetUser } from 'src/core/decorators/get-user.decorator';
 import { ResponseMessage } from 'src/core/decorators/response-message.decorator';
 import type { UserWithSession } from 'src/core/utils/token/types';
@@ -12,17 +25,37 @@ import { User } from 'src/users/schemas/user.schema';
 import { AuthService } from './auth.service';
 import { SignInDto } from './dtos/sign-in.dto';
 import { SignUpDto } from './dtos/sign-up.dto';
+import { TokenResponseDto } from './dtos/token-response.dto';
 import { JwtGuard } from './guards/jwt.guard';
 import { LocalGuard } from './guards/local.guard';
 
+@ApiTags('Authentication')
+@ApiExtraModels(ResponseDto, TokenResponseDto)
 @Controller('auth')
 export class AuthController {
   constructor(private readonly authService: AuthService) {}
 
   @ApiOperation({ summary: 'Sign up a new user' })
   @ApiBody({ type: SignUpDto })
-  @ApiResponse({ status: 201, description: 'User signed up successfully' })
-  @ApiResponse({ status: 400, description: 'Bad request' })
+  @ApiCreatedResponse({
+    description: 'User signed up successfully',
+    schema: {
+      allOf: [
+        { $ref: getSchemaPath(ResponseDto) },
+        {
+          properties: {
+            data: { $ref: getSchemaPath(TokenResponseDto) },
+          },
+        },
+      ],
+    },
+  })
+  @ApiBadRequestResponse({
+    description: 'Bad request',
+    schema: {
+      allOf: [{ $ref: getSchemaPath(ResponseDto) }],
+    },
+  })
   @ResponseMessage('User signed up successfully')
   @Post('sign-up')
   async signUp(@Body() dto: SignUpDto) {
@@ -31,21 +64,45 @@ export class AuthController {
 
   @ApiOperation({ summary: 'Sign in a user' })
   @ApiBody({ type: SignInDto })
-  @ApiResponse({ status: 200, description: 'User signed in successfully' })
-  @ApiResponse({ status: 400, description: 'Bad request' })
+  @ApiOkResponse({
+    description: 'User signed in successfully',
+    schema: {
+      allOf: [
+        { $ref: getSchemaPath(ResponseDto) },
+        {
+          properties: {
+            data: { $ref: getSchemaPath(TokenResponseDto) },
+          },
+        },
+      ],
+    },
+  })
+  @ApiBadRequestResponse({
+    description: 'Bad request',
+    schema: {
+      allOf: [{ $ref: getSchemaPath(ResponseDto) }],
+    },
+  })
   @UseGuards(LocalGuard)
   @ResponseMessage('User signed in successfully')
+  @HttpCode(HttpStatus.OK)
   @Post('sign-in')
   async signIn(@GetUser() user: User) {
     return await this.authService.signIn(user);
   }
 
   @ApiOperation({ summary: 'Sign out a user' })
-  @ApiResponse({ status: 200, description: 'User signed out successfully' })
-  @ApiResponse({ status: 400, description: 'Bad request' })
+  @ApiOkResponse({ description: 'User signed out successfully' })
+  @ApiBadRequestResponse({
+    description: 'Bad request',
+    schema: {
+      allOf: [{ $ref: getSchemaPath(ResponseDto) }],
+    },
+  })
   @ResponseMessage('User signed out successfully')
   @ApiBearerAuth()
   @UseGuards(JwtGuard)
+  @HttpCode(HttpStatus.OK)
   @Post('sign-out')
   async signOut(@GetUser() user: UserWithSession) {
     return await this.authService.signOut(user);

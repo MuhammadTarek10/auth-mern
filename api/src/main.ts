@@ -45,7 +45,6 @@ async function bootstrap() {
     .build();
   const document = SwaggerModule.createDocument(app, docConfig);
 
-  // Add basic auth for Swagger documentation
   app.use(
     ['/docs', '/docs-json'],
     basicAuth({

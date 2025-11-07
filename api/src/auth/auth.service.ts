@@ -1,5 +1,9 @@
-import { ConflictException, Injectable } from '@nestjs/common';
-import { Constants } from 'src/core/config/constants';
+import {
+  ConflictException,
+  Injectable,
+  UnauthorizedException,
+} from '@nestjs/common';
+import { ConfigService } from '@nestjs/config';
 import { HashService } from 'src/core/utils/hash.service';
 import { TokenService } from 'src/core/utils/token/token.service';
 import { UserWithSession } from 'src/core/utils/token/types';
@@ -15,6 +19,7 @@ export class AuthService {
     private readonly sessionRepository: SessionRepository,
     private readonly tokenService: TokenService,
     private readonly hashService: HashService,
+    private readonly config: ConfigService,
   ) {}
 
   async signUp(dto: SignUpDto) {
@@ -35,11 +40,12 @@ export class AuthService {
       email: user.email,
     });
     const refreshTokenHash = await this.hashService.hash(refreshToken);
+    const accessTokenExpiresIn = this.tokenService.getAccessTokenExpiresIn();
 
     const session = await this.sessionRepository.create({
       userId: user._id,
       refreshTokenHash,
-      expiresAt: new Date(Date.now() + Constants.REFRESH_TOKEN_EXPIRES_IN),
+      expiresAt: new Date(Date.now() + accessTokenExpiresIn * 1000),
     });
 
     const sessionId = session._id.toString();
@@ -49,9 +55,6 @@ export class AuthService {
       email: user.email,
       sessionId,
     });
-
-    const accessTokenExpiresIn =
-      await this.tokenService.getAccessTokenExpiresIn();
 
     return {
       access_token: accessToken,
@@ -66,11 +69,12 @@ export class AuthService {
       email: user.email,
     });
     const refreshTokenHash = await this.hashService.hash(refreshToken);
+    const accessTokenExpiresIn = this.tokenService.getAccessTokenExpiresIn();
 
     const session = await this.sessionRepository.create({
       userId: user._id,
       refreshTokenHash,
-      expiresAt: new Date(Date.now() + Constants.REFRESH_TOKEN_EXPIRES_IN),
+      expiresAt: new Date(Date.now() + accessTokenExpiresIn * 1000),
     });
 
     const accessToken = await this.tokenService.generateAccessToken({
@@ -78,9 +82,6 @@ export class AuthService {
       email: user.email,
       sessionId: session._id.toString(),
     });
-
-    const accessTokenExpiresIn =
-      await this.tokenService.getAccessTokenExpiresIn();
 
     return {
       access_token: accessToken,
@@ -90,6 +91,9 @@ export class AuthService {
   }
 
   async signOut(user: UserWithSession) {
+    const session = await this.sessionRepository.findById(user.sessionId);
+    if (!session) throw new UnauthorizedException('Session not found');
+
     await this.sessionRepository.deleteSession(user.sessionId);
   }
 
