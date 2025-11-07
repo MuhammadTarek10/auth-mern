@@ -1,0 +1,108 @@
+import { FilterQuery, Model, PipelineStage, Types } from 'mongoose';
+
+export abstract class BaseRepository<T> {
+  constructor(private readonly model: Model<T>) {}
+
+  async find(query: FilterQuery<T>): Promise<T[]> {
+    try {
+      return await this.model.find(query);
+    } catch (error) {
+      this.handleError(error);
+    }
+  }
+
+  async findOne(query: FilterQuery<T>): Promise<T | null> {
+    try {
+      return await this.model.findOne(query);
+    } catch (error) {
+      this.handleError(error);
+    }
+  }
+
+  async findById(id: string): Promise<T | null> {
+    try {
+      return await this.model.findById(new Types.ObjectId(id));
+    } catch (error) {
+      this.handleError(error);
+    }
+  }
+
+  async create(data: T): Promise<T> {
+    try {
+      return await this.model.create(data);
+    } catch (error) {
+      this.handleError(error);
+    }
+  }
+
+  async createMany(data: T[]): Promise<T[]> {
+    try {
+      const created = await this.model.insertMany(data);
+      return created;
+    } catch (error) {
+      this.handleError(error);
+    }
+  }
+
+  async update(id: string, data: Partial<T>): Promise<T | null> {
+    try {
+      return await this.model.findByIdAndUpdate(new Types.ObjectId(id), data, {
+        new: true,
+      });
+    } catch (error) {
+      this.handleError(error);
+    }
+  }
+
+  async updateMany(query: FilterQuery<T>, data: Partial<T>): Promise<void> {
+    try {
+      await this.model.updateMany(query, data);
+    } catch (error) {
+      this.handleError(error);
+    }
+  }
+
+  async delete(id: string): Promise<T | null> {
+    try {
+      return await this.model.findByIdAndDelete(new Types.ObjectId(id));
+    } catch (error) {
+      this.handleError(error);
+    }
+  }
+
+  async deleteMany(query: FilterQuery<T>): Promise<void> {
+    try {
+      await this.model.deleteMany(query);
+    } catch (error) {
+      this.handleError(error);
+    }
+  }
+
+  async count(query: FilterQuery<T>): Promise<number> {
+    try {
+      return await this.model.countDocuments(query);
+    } catch (error) {
+      this.handleError(error);
+    }
+  }
+
+  async exists(query: FilterQuery<T>): Promise<boolean> {
+    try {
+      return (await this.model.exists(query)) !== null;
+    } catch (error) {
+      this.handleError(error);
+    }
+  }
+
+  async aggregate(pipeline: PipelineStage[]): Promise<T[]> {
+    try {
+      return await this.model.aggregate(pipeline);
+    } catch (error) {
+      this.handleError(error);
+    }
+  }
+
+  protected handleError(error: any): never {
+    throw error;
+  }
+}
