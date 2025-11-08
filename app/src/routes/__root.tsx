@@ -26,6 +26,13 @@ export const Route = createRootRouteWithContext<RootRouteContext>()({
       />
     </>
   ),
+  loader: () => {
+    return new Promise((_, reject) => {
+      setTimeout(() => {
+        reject(new Error("Failed to load"));
+      }, 1000);
+    });
+  },
   pendingComponent: () => <LoadingComponent fullScreen />,
   errorComponent: ({ error }) => <ErrorComponent error={error} />,
 });

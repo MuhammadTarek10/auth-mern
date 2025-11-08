@@ -8,12 +8,12 @@ export function ErrorComponent({ error }: Props) {
   const navigate = useNavigate();
 
   return (
-    <div className=" relative min-h-screen flex items-center justify-center p-4 bg-linear-to-br from-bg-primary via-bg-secondary to-bg-primary">
+    <div className="relative min-h-screen flex items-center justify-center p-4 bg-linear-to-br from-bg-primary via-bg-secondary to-bg-primary">
       <div className="relative max-w-2xl w-full text-center space-y-8 animate-fade-in z-10">
         {/* Animated Error Icon */}
         <div className="relative inline-block">
           <div className="absolute inset-0 rounded-full blur-3xl animate-pulse bg-error/20"></div>
-          <div className="relative rounded-full p-8 shadow-2xl bg-linear-to-br from-bg-error to-bg-secondary">
+          <div className="relative rounded-full p-8 shadow-2xl bg-linear-to-br from-error to-secondary">
             <svg
               className="w-24 h-24 text-white animate-bounce-slow"
               fill="none"

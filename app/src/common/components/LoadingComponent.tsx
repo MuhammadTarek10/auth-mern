@@ -16,7 +16,7 @@ export function LoadingComponent({
   };
 
   const containerClasses = fullScreen
-    ? "fixed inset-0 flex items-center justify-center bg-linear-to-br from-bg-primary via-bg-secondary to-bg-primary z-50"
+    ? "fixed inset-0 flex items-center justify-center bg-gradient-to-br from-bg-primary via-bg-secondary to-bg-primary z-50"
     : "flex items-center justify-center p-8";
 
   return (
