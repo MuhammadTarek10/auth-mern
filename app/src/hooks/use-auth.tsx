@@ -38,22 +38,26 @@ export function AuthProvider({ children }: Props) {
   // Initialize auth on mount - check if user has valid session
   useEffect(() => {
     initializeAuth();
+  }, []); // Run only once on mount
 
-    // Listen for logout events from the API interceptor
+  // Listen for logout events from the API interceptor
+  useEffect(() => {
     const handleLogout = () => {
       setUser(null);
       clearRefreshTimer();
-      // Only show toast if user was previously authenticated
-      if (user) {
-        toast.error("Session expired. Please sign in again.");
-      }
     };
 
     window.addEventListener("auth:logout", handleLogout);
     return () => {
       window.removeEventListener("auth:logout", handleLogout);
-      clearRefreshTimer();
     };
+  }, []); // Set up listener once on mount
+
+  // Cleanup refresh timer when user logs out
+  useEffect(() => {
+    if (!user) {
+      clearRefreshTimer();
+    }
   }, [user]);
 
   const clearRefreshTimer = () => {
@@ -78,7 +82,6 @@ export function AuthProvider({ children }: Props) {
           scheduleTokenRefresh(response.data.expires_in);
         }
       } catch (error) {
-        console.error("Failed to refresh token:", error);
         setUser(null);
       }
     }, refreshIn);
@@ -92,7 +95,6 @@ export function AuthProvider({ children }: Props) {
       const response = await userService.getProfile();
       setUser(response.data);
     } catch (error) {
-      // No valid session, user stays null
       setUser(null);
     } finally {
       setIsLoading(false);
@@ -102,18 +104,10 @@ export function AuthProvider({ children }: Props) {
   const signIn = async (data: SignInSchema) => {
     try {
       const authResponse = await authService.signIn(data.email, data.password);
-      console.log("Sign-in response:", authResponse);
-      console.log("Cookies after sign-in:", document.cookie);
       toast.success(authResponse?.message || "Sign in successful");
 
-      // Small delay to ensure cookies are set
-      await new Promise((resolve) => setTimeout(resolve, 100));
-
       // Fetch user profile after successful sign in
-      console.log("Fetching profile after sign-in...");
-      console.log("Cookies before profile fetch:", document.cookie);
       const profileResponse = await userService.getProfile();
-      console.log("Profile response:", profileResponse);
       setUser(profileResponse.data);
 
       // Schedule proactive token refresh
@@ -121,7 +115,6 @@ export function AuthProvider({ children }: Props) {
         scheduleTokenRefresh(authResponse.data.expires_in);
       }
     } catch (error: unknown) {
-      console.error("Sign-in error:", error);
       const errorMessage =
         error instanceof Error ? error.message : "An error occurred";
       toast.error(errorMessage);
@@ -170,7 +163,7 @@ export function AuthProvider({ children }: Props) {
     }
   };
 
-  const updateUser = async (user: User) => {
+  const updateUser = (user: User) => {
     setUser(user);
   };
 

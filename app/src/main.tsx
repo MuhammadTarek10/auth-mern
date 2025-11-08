@@ -7,6 +7,7 @@ import { routeTree } from "./routeTree.gen";
 
 import { Toaster } from "sonner";
 import "./App.css";
+import { LoadingComponent } from "./common/components/LoadingComponent.tsx";
 import { AuthProvider, useAuth } from "./hooks/use-auth.tsx";
 import reportWebVitals from "./reportWebVitals.ts";
 
@@ -30,6 +31,9 @@ declare module "@tanstack/react-router" {
 // Inner component that uses the auth context
 function App() {
   const auth = useAuth();
+
+  if (auth.isLoading) return <LoadingComponent />;
+
   return <RouterProvider router={router} context={{ auth }} />;
 }
 
