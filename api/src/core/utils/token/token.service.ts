@@ -12,17 +12,29 @@ export class TokenService {
   ) {}
 
   async generateAccessToken(payload: TokenPayload): Promise<string> {
-    return this.jwtService.signAsync(payload, {
-      secret: this.config.getOrThrow(Environment.JWT_ACCESS_SECRET),
-      expiresIn: this.config.getOrThrow(Environment.JWT_ACCESS_EXPIRES_IN),
-    });
+    return this.jwtService.signAsync(
+      {
+        ...payload,
+        jti: this.generateJti(),
+      },
+      {
+        secret: this.config.getOrThrow(Environment.JWT_ACCESS_SECRET),
+        expiresIn: this.config.getOrThrow(Environment.JWT_ACCESS_EXPIRES_IN),
+      },
+    );
   }
 
   async generateRefreshToken(payload: TokenPayload): Promise<string> {
-    return this.jwtService.signAsync(payload, {
-      secret: this.config.getOrThrow(Environment.JWT_REFRESH_SECRET),
-      expiresIn: this.config.getOrThrow(Environment.JWT_REFRESH_EXPIRES_IN),
-    });
+    return this.jwtService.signAsync(
+      {
+        ...payload,
+        jti: this.generateJti(),
+      },
+      {
+        secret: this.config.getOrThrow(Environment.JWT_REFRESH_SECRET),
+        expiresIn: this.config.getOrThrow(Environment.JWT_REFRESH_EXPIRES_IN),
+      },
+    );
   }
 
   getAccessTokenExpiresIn(): number {
@@ -39,14 +51,26 @@ export class TokenService {
 
   async generateTokens(payload: TokenPayload): Promise<TokenResponse> {
     const [access_token, refresh_token] = await Promise.all([
-      this.jwtService.signAsync(payload, {
-        secret: this.config.getOrThrow(Environment.JWT_ACCESS_SECRET),
-        expiresIn: this.config.getOrThrow(Environment.JWT_ACCESS_EXPIRES_IN),
-      }),
-      this.jwtService.signAsync(payload, {
-        secret: this.config.getOrThrow(Environment.JWT_REFRESH_SECRET),
-        expiresIn: this.config.getOrThrow(Environment.JWT_REFRESH_EXPIRES_IN),
-      }),
+      this.jwtService.signAsync(
+        {
+          ...payload,
+          jti: this.generateJti(),
+        },
+        {
+          secret: this.config.getOrThrow(Environment.JWT_ACCESS_SECRET),
+          expiresIn: this.config.getOrThrow(Environment.JWT_ACCESS_EXPIRES_IN),
+        },
+      ),
+      this.jwtService.signAsync(
+        {
+          ...payload,
+          jti: this.generateJti(),
+        },
+        {
+          secret: this.config.getOrThrow(Environment.JWT_REFRESH_SECRET),
+          expiresIn: this.config.getOrThrow(Environment.JWT_REFRESH_EXPIRES_IN),
+        },
+      ),
     ]);
     return {
       access_token,
@@ -73,5 +97,9 @@ export class TokenService {
     } catch {
       throw new UnauthorizedException('Invalid refresh token');
     }
+  }
+
+  generateJti(): string {
+    return `${Date.now()}-${Math.random().toString(36).substring(2, 15)}`;
   }
 }

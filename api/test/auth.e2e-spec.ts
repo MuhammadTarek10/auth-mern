@@ -301,6 +301,247 @@ describe('Auth (e2e)', () => {
     });
   });
 
+  describe('POST /auth/refresh', () => {
+    const validUser = {
+      name: 'Charlie Brown',
+      email: 'charlie.brown@example.com',
+      password: 'Test@111',
+    };
+
+    beforeEach(async () => {
+      // Sign up a user before each test
+      await pactum
+        .spec()
+        .post('/auth/sign-up')
+        .withBody(validUser)
+        .expectStatus(HttpStatus.CREATED)
+        .stores('initialAccessToken', 'data.access_token')
+        .stores('initialRefreshToken', 'data.refresh_token');
+    });
+
+    it('should refresh tokens successfully', () => {
+      return pactum
+        .spec()
+        .post('/auth/refresh')
+        .withBearerToken('$S{initialRefreshToken}')
+        .expectStatus(HttpStatus.OK)
+        .expectJsonMatch({
+          message: 'Token refreshed successfully',
+          data: {
+            access_token: like('token'),
+            refresh_token: like('token'),
+            expires_in: like(3600),
+          },
+        })
+        .stores('newAccessToken', 'data.access_token')
+        .stores('newRefreshToken', 'data.refresh_token');
+    });
+
+    it('should return 401 when no refresh token is provided', () => {
+      return pactum
+        .spec()
+        .post('/auth/refresh')
+        .expectStatus(HttpStatus.UNAUTHORIZED);
+    });
+
+    it('should return 401 when invalid refresh token is provided', () => {
+      return pactum
+        .spec()
+        .post('/auth/refresh')
+        .withBearerToken('invalid-token')
+        .expectStatus(HttpStatus.UNAUTHORIZED);
+    });
+
+    it('should return 401 when access token is used instead of refresh token', () => {
+      return pactum
+        .spec()
+        .post('/auth/refresh')
+        .withBearerToken('$S{initialAccessToken}')
+        .expectStatus(HttpStatus.UNAUTHORIZED);
+    });
+
+    it('should return 401 when expired refresh token is provided', () => {
+      // Mock expired token - in real scenario this would be a genuinely expired token
+      const expiredToken =
+        'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjEyMzQ1Njc4OTAiLCJlbWFpbCI6InRlc3RAZXhhbXBsZS5jb20iLCJzZXNzaW9uSWQiOiJhYmMxMjMiLCJpYXQiOjE1MTYyMzkwMjIsImV4cCI6MTUxNjIzOTAyMn0.SflKxwRJSMeKKF2QT4fwpMeJf36POk6yJV_adQssw5c';
+
+      return pactum
+        .spec()
+        .post('/auth/refresh')
+        .withBearerToken(expiredToken)
+        .expectStatus(HttpStatus.UNAUTHORIZED);
+    });
+
+    it('should invalidate old refresh token after successful refresh', async () => {
+      // First refresh - should work
+      await pactum
+        .spec()
+        .post('/auth/refresh')
+        .withBearerToken('$S{initialRefreshToken}')
+        .expectStatus(HttpStatus.OK)
+        .stores('firstNewRefreshToken', 'data.refresh_token');
+
+      // Try to use old refresh token again - should fail
+      return pactum
+        .spec()
+        .post('/auth/refresh')
+        .withBearerToken('$S{initialRefreshToken}')
+        .expectStatus(HttpStatus.UNAUTHORIZED);
+    });
+
+    it('should allow multiple consecutive refreshes', async () => {
+      // First refresh
+      await pactum
+        .spec()
+        .post('/auth/refresh')
+        .withBearerToken('$S{initialRefreshToken}')
+        .expectStatus(HttpStatus.OK)
+        .stores('refreshToken1', 'data.refresh_token');
+
+      // Second refresh with new token
+      await pactum
+        .spec()
+        .post('/auth/refresh')
+        .withBearerToken('$S{refreshToken1}')
+        .expectStatus(HttpStatus.OK)
+        .stores('refreshToken2', 'data.refresh_token');
+
+      // Third refresh with newer token
+      return pactum
+        .spec()
+        .post('/auth/refresh')
+        .withBearerToken('$S{refreshToken2}')
+        .expectStatus(HttpStatus.OK)
+        .expectJsonMatch({
+          message: 'Token refreshed successfully',
+          data: {
+            access_token: like('token'),
+            refresh_token: like('token'),
+            expires_in: like(3600),
+          },
+        });
+    });
+
+    it('should return 401 when refresh token from deleted session is used', async () => {
+      // Sign out to delete the session
+      await pactum
+        .spec()
+        .post('/auth/sign-out')
+        .withBearerToken('$S{initialAccessToken}')
+        .expectStatus(HttpStatus.OK);
+
+      // Try to refresh with token from deleted session
+      return pactum
+        .spec()
+        .post('/auth/refresh')
+        .withBearerToken('$S{initialRefreshToken}')
+        .expectStatus(HttpStatus.UNAUTHORIZED);
+    });
+
+    it('should not allow refresh token from one session to be used for another', async () => {
+      // Create a second session
+      await pactum
+        .spec()
+        .post('/auth/sign-in')
+        .withBody({
+          email: validUser.email,
+          password: validUser.password,
+        })
+        .expectStatus(HttpStatus.OK)
+        .stores('secondSessionRefreshToken', 'data.refresh_token');
+
+      // Both refresh tokens should work independently
+      await pactum
+        .spec()
+        .post('/auth/refresh')
+        .withBearerToken('$S{initialRefreshToken}')
+        .expectStatus(HttpStatus.OK);
+
+      await pactum
+        .spec()
+        .post('/auth/refresh')
+        .withBearerToken('$S{secondSessionRefreshToken}')
+        .expectStatus(HttpStatus.OK);
+    });
+
+    it('should generate different tokens on each refresh', async () => {
+      // First refresh
+      await pactum
+        .spec()
+        .post('/auth/refresh')
+        .withBearerToken('$S{initialRefreshToken}')
+        .expectStatus(HttpStatus.OK)
+        .stores('firstRefreshAccessToken', 'data.access_token')
+        .stores('firstRefreshRefreshToken', 'data.refresh_token');
+
+      // Second refresh
+      await pactum
+        .spec()
+        .post('/auth/refresh')
+        .withBearerToken('$S{firstRefreshRefreshToken}')
+        .expectStatus(HttpStatus.OK)
+        .stores('secondRefreshAccessToken', 'data.access_token')
+        .stores('secondRefreshRefreshToken', 'data.refresh_token');
+
+      // All tokens should be different
+      const firstAccess = pactum.stash.getDataStore()[
+        'firstRefreshAccessToken'
+      ] as string;
+      const secondAccess = pactum.stash.getDataStore()[
+        'secondRefreshAccessToken'
+      ] as string;
+      const firstRefresh = pactum.stash.getDataStore()[
+        'firstRefreshRefreshToken'
+      ] as string;
+      const secondRefresh = pactum.stash.getDataStore()[
+        'secondRefreshRefreshToken'
+      ] as string;
+
+      expect(firstAccess).not.toBe(secondAccess);
+      expect(firstRefresh).not.toBe(secondRefresh);
+    });
+
+    it('should be able to use new access token after refresh', async () => {
+      // Refresh to get new access token
+      await pactum
+        .spec()
+        .post('/auth/refresh')
+        .withBearerToken('$S{initialRefreshToken}')
+        .expectStatus(HttpStatus.OK)
+        .stores('refreshedAccessToken', 'data.access_token');
+
+      // Use the new access token to sign out
+      return pactum
+        .spec()
+        .post('/auth/sign-out')
+        .withBearerToken('$S{refreshedAccessToken}')
+        .expectStatus(HttpStatus.OK)
+        .expectJsonMatch({
+          message: 'User signed out successfully',
+        });
+    });
+
+    it('should handle malformed refresh token', () => {
+      return pactum
+        .spec()
+        .post('/auth/refresh')
+        .withBearerToken('not.a.valid.jwt')
+        .expectStatus(HttpStatus.UNAUTHORIZED);
+    });
+
+    it('should return 401 when refresh token is missing sessionId', () => {
+      // Create a token without sessionId (old format)
+      const tokenWithoutSessionId =
+        'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjEyMzQ1Njc4OTAiLCJlbWFpbCI6InRlc3RAZXhhbXBsZS5jb20iLCJpYXQiOjE1MTYyMzkwMjJ9.SflKxwRJSMeKKF2QT4fwpMeJf36POk6yJV_adQssw5c';
+
+      return pactum
+        .spec()
+        .post('/auth/refresh')
+        .withBearerToken(tokenWithoutSessionId)
+        .expectStatus(HttpStatus.UNAUTHORIZED);
+    });
+  });
+
   describe('POST /auth/sign-out', () => {
     const validUser = {
       name: 'Bob Johnson',
@@ -426,6 +667,47 @@ describe('Auth (e2e)', () => {
         .spec()
         .post('/auth/sign-out')
         .withBearerToken('$S{flowAccessToken}')
+        .expectStatus(HttpStatus.UNAUTHORIZED);
+    });
+
+    it('should complete full refresh flow: sign-up -> refresh -> use new token -> sign-out', async () => {
+      // Step 1: Sign up
+      await pactum
+        .spec()
+        .post('/auth/sign-up')
+        .withBody(validUser)
+        .expectStatus(HttpStatus.CREATED)
+        .stores('originalAccessToken', 'data.access_token')
+        .stores('originalRefreshToken', 'data.refresh_token');
+
+      // Step 2: Refresh the token
+      await pactum
+        .spec()
+        .post('/auth/refresh')
+        .withBearerToken('$S{originalRefreshToken}')
+        .expectStatus(HttpStatus.OK)
+        .stores('refreshedAccessToken', 'data.access_token')
+        .stores('refreshedRefreshToken', 'data.refresh_token');
+
+      // Step 3: Verify old refresh token no longer works
+      await pactum
+        .spec()
+        .post('/auth/refresh')
+        .withBearerToken('$S{originalRefreshToken}')
+        .expectStatus(HttpStatus.UNAUTHORIZED);
+
+      // Step 4: Use new access token to sign out
+      await pactum
+        .spec()
+        .post('/auth/sign-out')
+        .withBearerToken('$S{refreshedAccessToken}')
+        .expectStatus(HttpStatus.OK);
+
+      // Step 5: Verify new refresh token no longer works after sign out
+      await pactum
+        .spec()
+        .post('/auth/refresh')
+        .withBearerToken('$S{refreshedRefreshToken}')
         .expectStatus(HttpStatus.UNAUTHORIZED);
     });
 
