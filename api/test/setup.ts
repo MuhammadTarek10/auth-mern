@@ -2,6 +2,7 @@ import { INestApplication, ValidationPipe } from '@nestjs/common';
 import { Reflector } from '@nestjs/core';
 import { getConnectionToken } from '@nestjs/mongoose';
 import { Test, TestingModule } from '@nestjs/testing';
+import cookieParser from 'cookie-parser';
 import { Connection } from 'mongoose';
 import * as pactum from 'pactum';
 import { AppModule } from '../src/app.module';
@@ -19,11 +20,14 @@ export default async (
   const app = moduleFixture.createNestApplication();
   const connection = moduleFixture.get<Connection>(getConnectionToken());
 
+  app.use(cookieParser());
+
   app.setGlobalPrefix('api');
 
   app.enableCors({
     origin: '*',
     methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
+    credentials: true,
   });
 
   app.useGlobalPipes(

@@ -44,6 +44,22 @@ export class AuthService {
 
     return response;
   }
+
+  public async refreshToken(): Promise<ApiResponse<TokenResponse>> {
+    const response = await this.apiService.post<TokenResponse>(
+      Constants.AUTH_ENDPOINTS.REFRESH_TOKEN
+    );
+
+    return response;
+  }
+
+  public async signOut(): Promise<ApiResponse<void>> {
+    const response = await this.apiService.post<void>(
+      Constants.AUTH_ENDPOINTS.SIGN_OUT
+    );
+
+    return response;
+  }
 }
 
 export const authService = AuthService.getInstance();

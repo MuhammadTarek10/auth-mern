@@ -16,16 +16,85 @@ export class ApiError extends Error {
 export class ApiService {
   private static instance: ApiService;
   private readonly client: AxiosInstance;
+  private isRefreshing = false;
+  private refreshSubscribers: Array<(token: string) => void> = [];
 
   private constructor() {
     // Create an Axios instance for use as the client
     this.client = axios.create({
       baseURL: `${Constants.API_URL}/api/${Constants.API_VERSION}`,
+      withCredentials: true,
       headers: {
         "Content-Type": "application/json",
         "Accept-Language": "en-US",
       },
     });
+
+    this.setupInterceptors();
+  }
+
+  private setupInterceptors() {
+    // Response interceptor for handling 401 errors and token refresh
+    this.client.interceptors.response.use(
+      (response) => response,
+      async (error: AxiosError) => {
+        const originalRequest = error.config as any;
+
+        // Don't attempt refresh for the refresh endpoint itself or sign-in/sign-up
+        const isRefreshEndpoint = originalRequest.url?.includes(
+          Constants.AUTH_ENDPOINTS.REFRESH_TOKEN
+        );
+        const isAuthEndpoint =
+          originalRequest.url?.includes("/auth/sign-in") ||
+          originalRequest.url?.includes("/auth/sign-up");
+
+        // If error is 401 and we haven't retried yet and it's not the refresh/auth endpoint
+        if (
+          error.response?.status === 401 &&
+          !originalRequest._retry &&
+          !isRefreshEndpoint &&
+          !isAuthEndpoint
+        ) {
+          if (this.isRefreshing) {
+            // If already refreshing, wait for it to complete
+            return new Promise((resolve) => {
+              this.refreshSubscribers.push(() => {
+                resolve(this.client(originalRequest));
+              });
+            });
+          }
+
+          originalRequest._retry = true;
+          this.isRefreshing = true;
+
+          try {
+            // Attempt to refresh token
+            await this.client.post(Constants.AUTH_ENDPOINTS.REFRESH_TOKEN);
+
+            this.isRefreshing = false;
+            this.onRefreshSuccess();
+
+            // Retry the original request
+            return this.client(originalRequest);
+          } catch (refreshError) {
+            this.isRefreshing = false;
+            this.refreshSubscribers = [];
+
+            // Trigger logout event for auth provider to handle
+            window.dispatchEvent(new CustomEvent("auth:logout"));
+
+            return Promise.reject(refreshError);
+          }
+        }
+
+        return Promise.reject(error);
+      }
+    );
+  }
+
+  private onRefreshSuccess() {
+    this.refreshSubscribers.forEach((callback) => callback("refreshed"));
+    this.refreshSubscribers = [];
   }
 
   public static getInstance(): ApiService {
@@ -73,7 +142,7 @@ export class ApiService {
     }
   }
 
-  public async post<T>(url: string, data: unknown): Promise<ApiResponse<T>> {
+  public async post<T>(url: string, data?: unknown): Promise<ApiResponse<T>> {
     try {
       const response = await this.client.post<T>(url, data);
       return response.data as ApiResponse<T>;

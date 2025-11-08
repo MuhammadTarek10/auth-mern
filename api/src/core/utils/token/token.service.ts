@@ -19,7 +19,7 @@ export class TokenService {
       },
       {
         secret: this.config.getOrThrow(Environment.JWT_ACCESS_SECRET),
-        expiresIn: this.config.getOrThrow(Environment.JWT_ACCESS_EXPIRES_IN),
+        expiresIn: this.getAccessTokenExpiresIn(),
       },
     );
   }
@@ -32,7 +32,7 @@ export class TokenService {
       },
       {
         secret: this.config.getOrThrow(Environment.JWT_REFRESH_SECRET),
-        expiresIn: this.config.getOrThrow(Environment.JWT_REFRESH_EXPIRES_IN),
+        expiresIn: this.getRefreshTokenExpiresIn(),
       },
     );
   }
@@ -58,8 +58,7 @@ export class TokenService {
         },
         {
           secret: this.config.getOrThrow(Environment.JWT_ACCESS_SECRET),
-          expiresIn:
-            this.config.getOrThrow(Environment.JWT_ACCESS_EXPIRES_IN) * 1000,
+          expiresIn: this.getAccessTokenExpiresIn(),
         },
       ),
       this.jwtService.signAsync(
@@ -69,15 +68,16 @@ export class TokenService {
         },
         {
           secret: this.config.getOrThrow(Environment.JWT_REFRESH_SECRET),
-          expiresIn:
-            this.config.getOrThrow(Environment.JWT_REFRESH_EXPIRES_IN) * 1000,
+          expiresIn: this.config.getOrThrow<number>(
+            Environment.JWT_REFRESH_EXPIRES_IN,
+          ),
         },
       ),
     ]);
     return {
       access_token,
       refresh_token,
-      expires_in: this.config.getOrThrow(Environment.JWT_ACCESS_EXPIRES_IN),
+      expires_in: this.getAccessTokenExpiresIn(),
     };
   }
 

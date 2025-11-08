@@ -9,9 +9,10 @@ export const Constants = {
     SIGN_IN: "/auth/sign-in",
     SIGN_UP: "/auth/sign-up",
     REFRESH_TOKEN: "/auth/refresh",
+    SIGN_OUT: "/auth/sign-out",
   },
 
   PROFILE_ENDPOINTS: {
-    GET_PROFILE: "/profile",
+    GET_PROFILE: "/users/profile",
   },
 };
