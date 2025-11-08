@@ -32,9 +32,7 @@ export function ProfileInfoCard({ user }: ProfileInfoCardProps) {
           </svg>
           Profile Information
         </CardTitle>
-        <CardDescription>
-          Your account details and information
-        </CardDescription>
+        <CardDescription>Your account details and information</CardDescription>
       </CardHeader>
       <CardContent className="space-y-6">
         <div className="space-y-2">
@@ -99,4 +97,3 @@ export function ProfileInfoCard({ user }: ProfileInfoCardProps) {
     </Card>
   );
 }
-
