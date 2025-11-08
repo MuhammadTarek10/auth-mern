@@ -5,12 +5,12 @@ export function NotFoundPage() {
   const navigate = useNavigate();
 
   return (
-    <div className="relative flex min-h-screen flex-col items-center justify-center overflow-hidden bg-linear-to-br from-purple-900 via-pink-900 to-purple-950 px-4">
+    <div className="relative flex min-h-screen flex-col items-center justify-center overflow-hidden bg-linear-to-br from-green-900 via-emerald-900 to-green-950 px-4">
       {/* Animated background blobs */}
       <div className="absolute inset-0 overflow-hidden">
-        <div className="absolute -left-20 -top-20 h-96 w-96 animate-blob rounded-full bg-purple-500/30 blur-3xl"></div>
-        <div className="absolute -bottom-20 -right-20 h-96 w-96 animate-blob animation-delay-2000 rounded-full bg-pink-500/30 blur-3xl"></div>
-        <div className="absolute left-1/2 top-1/2 h-96 w-96 animate-blob animation-delay-4000 rounded-full bg-purple-400/20 blur-3xl"></div>
+        <div className="absolute -left-20 -top-20 h-96 w-96 animate-blob rounded-full bg-green-500/30 blur-3xl"></div>
+        <div className="absolute -bottom-20 -right-20 h-96 w-96 animate-blob animation-delay-2000 rounded-full bg-emerald-500/30 blur-3xl"></div>
+        <div className="absolute left-1/2 top-1/2 h-96 w-96 animate-blob animation-delay-4000 rounded-full bg-green-400/20 blur-3xl"></div>
       </div>
 
       {/* Main content */}
@@ -18,7 +18,7 @@ export function NotFoundPage() {
         {/* Gradient 404 text */}
         <div className="mb-8">
           <h1 className="text-[12rem] font-black leading-none">
-            <span className="bg-linear-to-r from-purple-400 via-pink-400 to-purple-300 bg-clip-text text-transparent animate-gradient">
+            <span className="bg-linear-to-r from-green-400 via-emerald-400 to-green-300 bg-clip-text text-transparent animate-gradient">
               404
             </span>
           </h1>
@@ -26,13 +26,13 @@ export function NotFoundPage() {
 
         {/* Title with gradient */}
         <h2 className="mb-6 text-5xl font-bold">
-          <span className="bg-linear-to-r from-white via-pink-200 to-purple-200 bg-clip-text text-transparent">
+          <span className="bg-linear-to-r from-white via-emerald-200 to-green-200 bg-clip-text text-transparent">
             Oops! Page Not Found
           </span>
         </h2>
 
         {/* Description */}
-        <p className="mb-12 text-lg text-purple-100 md:text-xl">
+        <p className="mb-12 text-lg text-green-100 md:text-xl">
           The page you're looking for seems to have wandered off into the
           digital void. Don't worry, let's get you back on track!
         </p>
@@ -43,7 +43,7 @@ export function NotFoundPage() {
             onClick={() => navigate({ to: "/" })}
             variant="default"
             size="lg"
-            className="bg-linear-to-r from-purple-500 to-pink-500 text-white shadow-lg shadow-purple-500/50 hover:from-purple-600 hover:to-pink-600 hover:shadow-xl hover:shadow-purple-500/60 transition-all duration-300">
+            className="bg-linear-to-r from-green-500 to-emerald-500 text-white shadow-lg shadow-green-500/50 hover:from-green-600 hover:to-emerald-600 hover:shadow-xl hover:shadow-green-500/60 transition-all duration-300">
             <svg
               className="mr-2 h-5 w-5"
               fill="none"
@@ -62,7 +62,7 @@ export function NotFoundPage() {
             onClick={() => window.history.back()}
             variant="outline"
             size="lg"
-            className="border-2 border-purple-400/50 bg-white/10 text-purple-100 backdrop-blur-sm hover:bg-white/20 hover:border-purple-300 hover:text-white transition-all duration-300">
+            className="border-2 border-green-400/50 bg-white/10 text-green-100 backdrop-blur-sm hover:bg-white/20 hover:border-green-300 hover:text-white transition-all duration-300">
             <svg
               className="mr-2 h-5 w-5"
               fill="none"
@@ -81,11 +81,11 @@ export function NotFoundPage() {
       </div>
 
       {/* Decorative elements */}
-      <div className="absolute bottom-10 left-1/2 -translate-x-1/2 text-purple-300/20">
+      <div className="absolute bottom-10 left-1/2 -translate-x-1/2 text-green-300/20">
         <div className="flex gap-2">
-          <div className="h-2 w-2 animate-bounce-slow rounded-full bg-purple-400"></div>
-          <div className="h-2 w-2 animate-bounce-slow animation-delay-2000 rounded-full bg-pink-400"></div>
-          <div className="h-2 w-2 animate-bounce-slow animation-delay-4000 rounded-full bg-purple-400"></div>
+          <div className="h-2 w-2 animate-bounce-slow rounded-full bg-green-400"></div>
+          <div className="h-2 w-2 animate-bounce-slow animation-delay-2000 rounded-full bg-emerald-400"></div>
+          <div className="h-2 w-2 animate-bounce-slow animation-delay-4000 rounded-full bg-green-400"></div>
         </div>
       </div>
     </div>
