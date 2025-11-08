@@ -1,3 +1,4 @@
+import { ErrorPage } from "@/features/error/pages/ErrorPage";
 import type { AuthContextType } from "@/hooks/use-auth";
 import { TanStackDevtools } from "@tanstack/react-devtools";
 import { createRootRouteWithContext, Outlet } from "@tanstack/react-router";
@@ -24,4 +25,8 @@ export const Route = createRootRouteWithContext<RootRouteContext>()({
       />
     </>
   ),
+  loader: () => {
+    throw new Error("Test error");
+  },
+  errorComponent: ({ error }) => <ErrorPage error={error} />,
 });
