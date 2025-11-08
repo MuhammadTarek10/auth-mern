@@ -5,7 +5,7 @@ import {
   AuthMethodSchema,
 } from '../../auth/schemas/auth-methods.schema';
 
-@Schema()
+@Schema({ timestamps: true })
 export class User extends CommonSchema {
   @Prop({ required: true, unique: true })
   email: string;
