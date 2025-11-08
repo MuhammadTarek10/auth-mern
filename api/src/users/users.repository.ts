@@ -22,7 +22,7 @@ export class UsersRepository extends BaseRepository<User> {
   async findWithPassword(email: string): Promise<User | null> {
     return await this.userModel
       .findOne({ email })
-      .select('+authMethods.passwordHash')
+      .select('+authMethods')
       .exec();
   }
 }

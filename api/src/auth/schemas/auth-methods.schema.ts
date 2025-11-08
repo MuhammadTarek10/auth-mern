@@ -5,7 +5,7 @@ export class AuthMethod {
   @Prop({ required: true })
   provider: string;
 
-  @Prop({ required: false, select: false })
+  @Prop({ required: false })
   passwordHash?: string;
 
   @Prop({ required: false })

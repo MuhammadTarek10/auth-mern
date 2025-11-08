@@ -13,7 +13,7 @@ export class User extends CommonSchema {
   @Prop({ required: true })
   name: string;
 
-  @Prop({ type: [AuthMethodSchema], required: true })
+  @Prop({ type: [AuthMethodSchema], required: true, select: false })
   authMethods: AuthMethod[];
 }
 
