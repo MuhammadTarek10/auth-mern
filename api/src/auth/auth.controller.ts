@@ -20,7 +20,10 @@ import {
 import { ResponseDto } from 'src/core/common/dtos/response.dto';
 import { GetUser } from 'src/core/decorators/get-user.decorator';
 import { ResponseMessage } from 'src/core/decorators/response-message.decorator';
-import type { UserWithSession } from 'src/core/utils/token/types';
+import type {
+  RefreshTokenPayload,
+  UserWithSession,
+} from 'src/core/utils/token/types';
 import { User } from 'src/users/schemas/user.schema';
 import { AuthService } from './auth.service';
 import { SignInDto } from './dtos/sign-in.dto';
@@ -28,6 +31,7 @@ import { SignUpDto } from './dtos/sign-up.dto';
 import { TokenResponseDto } from './dtos/token-response.dto';
 import { JwtGuard } from './guards/jwt.guard';
 import { LocalGuard } from './guards/local.guard';
+import { RefreshGuard } from './guards/refresh.guard';
 
 @ApiTags('Authentication')
 @ApiExtraModels(ResponseDto, TokenResponseDto)
@@ -89,6 +93,29 @@ export class AuthController {
   @Post('sign-in')
   async signIn(@GetUser() user: User) {
     return await this.authService.signIn(user);
+  }
+
+  @ApiOperation({ summary: "Refresh a user's token" })
+  @ApiBearerAuth()
+  @ApiOkResponse({
+    description: 'Token refreshed successfully',
+    schema: {
+      allOf: [
+        { $ref: getSchemaPath(ResponseDto) },
+        {
+          properties: {
+            data: { $ref: getSchemaPath(TokenResponseDto) },
+          },
+        },
+      ],
+    },
+  })
+  @UseGuards(RefreshGuard)
+  @ResponseMessage('Token refreshed successfully')
+  @HttpCode(HttpStatus.OK)
+  @Post('refresh')
+  async refresh(@GetUser() payload: RefreshTokenPayload) {
+    return await this.authService.refresh(payload);
   }
 
   @ApiOperation({ summary: 'Sign out a user' })

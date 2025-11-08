@@ -5,7 +5,8 @@ export interface TokenPayload {
 }
 
 export interface RefreshTokenPayload extends TokenPayload {
-  refresh_token: string;
+  sessionId: string;
+  refreshToken: string;
 }
 
 export interface TokenResponse {

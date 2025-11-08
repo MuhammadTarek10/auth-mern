@@ -1,8 +1,8 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, UnauthorizedException } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { JwtService } from '@nestjs/jwt';
 import { Environment } from 'src/core/config/environment';
-import { TokenPayload, TokenResponse } from './types';
+import { RefreshTokenPayload, TokenPayload, TokenResponse } from './types';
 
 @Injectable()
 export class TokenService {
@@ -37,7 +37,7 @@ export class TokenService {
     );
   }
 
-  async generateToken(payload: TokenPayload): Promise<TokenResponse> {
+  async generateTokens(payload: TokenPayload): Promise<TokenResponse> {
     const [access_token, refresh_token] = await Promise.all([
       this.jwtService.signAsync(payload, {
         secret: this.config.getOrThrow(Environment.JWT_ACCESS_SECRET),
@@ -55,15 +55,23 @@ export class TokenService {
     };
   }
 
-  async verifyToken(token: string): Promise<TokenPayload> {
-    return this.jwtService.verifyAsync(token, {
-      secret: this.config.getOrThrow(Environment.JWT_ACCESS_SECRET),
-    });
+  async verifyAccessToken(token: string): Promise<TokenPayload> {
+    try {
+      return await this.jwtService.verifyAsync(token, {
+        secret: this.config.getOrThrow(Environment.JWT_ACCESS_SECRET),
+      });
+    } catch {
+      throw new UnauthorizedException('Invalid access token');
+    }
   }
 
-  async verifyRefreshToken(token: string): Promise<TokenPayload> {
-    return this.jwtService.verifyAsync(token, {
-      secret: this.config.getOrThrow(Environment.JWT_REFRESH_SECRET),
-    });
+  async verifyRefreshToken(token: string): Promise<RefreshTokenPayload> {
+    try {
+      return await this.jwtService.verifyAsync(token, {
+        secret: this.config.getOrThrow(Environment.JWT_REFRESH_SECRET),
+      });
+    } catch {
+      throw new UnauthorizedException('Invalid refresh token');
+    }
   }
 }

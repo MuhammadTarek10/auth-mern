@@ -6,7 +6,10 @@ import {
 import { ConfigService } from '@nestjs/config';
 import { HashService } from 'src/core/utils/hash.service';
 import { TokenService } from 'src/core/utils/token/token.service';
-import { UserWithSession } from 'src/core/utils/token/types';
+import {
+  RefreshTokenPayload,
+  UserWithSession,
+} from 'src/core/utils/token/types';
 import { User } from 'src/users/schemas/user.schema';
 import { UsersService } from 'src/users/users.service';
 import { SignUpDto } from './dtos/sign-up.dto';
@@ -35,26 +38,34 @@ export class AuthService {
 
     const userId = user._id.toString();
 
-    const refreshToken = await this.tokenService.generateRefreshToken({
-      id: userId,
-      email: user.email,
-    });
-    const refreshTokenHash = await this.hashService.hash(refreshToken);
-    const accessTokenExpiresIn = this.tokenService.getAccessTokenExpiresIn();
-
     const session = await this.sessionRepository.create({
       userId: user._id,
-      refreshTokenHash,
-      expiresAt: new Date(Date.now() + accessTokenExpiresIn * 1000),
+      refreshTokenHash: 'placeholder',
+      expiresAt: this.getExpiresAt('refresh'),
     });
 
     const sessionId = session._id.toString();
+
+    // Generate tokens with sessionId
+    const refreshToken = await this.tokenService.generateRefreshToken({
+      id: userId,
+      email: user.email,
+      sessionId,
+    });
+    const refreshTokenHash = await this.hashService.hash(refreshToken);
+
+    // Update session with actual refresh token hash
+    await this.sessionRepository.update(sessionId, {
+      refreshTokenHash,
+    });
 
     const accessToken = await this.tokenService.generateAccessToken({
       id: userId,
       email: user.email,
       sessionId,
     });
+
+    const accessTokenExpiresIn = this.tokenService.getAccessTokenExpiresIn();
 
     return {
       access_token: accessToken,
@@ -64,29 +75,76 @@ export class AuthService {
   }
 
   async signIn(user: User) {
-    const refreshToken = await this.tokenService.generateRefreshToken({
-      id: user._id.toString(),
-      email: user.email,
-    });
-    const refreshTokenHash = await this.hashService.hash(refreshToken);
-    const accessTokenExpiresIn = this.tokenService.getAccessTokenExpiresIn();
+    const userId = user._id.toString();
 
     const session = await this.sessionRepository.create({
       userId: user._id,
+      refreshTokenHash: 'placeholder',
+      expiresAt: this.getExpiresAt('refresh'),
+    });
+
+    const sessionId = session._id.toString();
+
+    const refreshToken = await this.tokenService.generateRefreshToken({
+      id: userId,
+      email: user.email,
+      sessionId,
+    });
+    const refreshTokenHash = await this.hashService.hash(refreshToken);
+
+    await this.sessionRepository.update(sessionId, {
       refreshTokenHash,
-      expiresAt: new Date(Date.now() + accessTokenExpiresIn * 1000),
     });
 
     const accessToken = await this.tokenService.generateAccessToken({
-      id: user._id.toString(),
+      id: userId,
       email: user.email,
-      sessionId: session._id.toString(),
+      sessionId,
     });
+
+    const accessTokenExpiresIn = this.tokenService.getAccessTokenExpiresIn();
 
     return {
       access_token: accessToken,
       refresh_token: refreshToken,
       expires_in: accessTokenExpiresIn,
+    };
+  }
+
+  async refresh(payload: RefreshTokenPayload) {
+    const { id, sessionId, refreshToken, email } = payload;
+
+    const user = await this.usersService.findById(id);
+    if (!user) throw new UnauthorizedException('User not found');
+
+    const session = await this.sessionRepository.findById(sessionId);
+    if (!session) throw new UnauthorizedException('Session not found');
+
+    const isValid = await this.hashService.verify(
+      refreshToken,
+      session.refreshTokenHash,
+    );
+    if (!isValid) throw new UnauthorizedException('Invalid refresh token');
+
+    const { access_token, refresh_token } =
+      await this.tokenService.generateTokens({
+        id,
+        email,
+        sessionId,
+      });
+    const newRefreshTokenHash = await this.hashService.hash(refresh_token);
+
+    await this.sessionRepository.update(sessionId, {
+      refreshTokenHash: newRefreshTokenHash,
+      expiresAt: this.getExpiresAt('refresh'),
+    });
+
+    const expiresIn = this.tokenService.getAccessTokenExpiresIn();
+
+    return {
+      access_token: access_token,
+      refresh_token: refresh_token,
+      expires_in: expiresIn,
     };
   }
 
@@ -108,5 +166,15 @@ export class AuthService {
     if (!isPasswordValid) return null;
 
     return user;
+  }
+
+  private getExpiresAt(type: 'access' | 'refresh') {
+    const now = new Date();
+    const expiresIn = Number(
+      type === 'access'
+        ? this.tokenService.getAccessTokenExpiresIn()
+        : this.tokenService.getRefreshTokenExpiresIn(),
+    );
+    return new Date(now.getTime() + expiresIn * 1000);
   }
 }
