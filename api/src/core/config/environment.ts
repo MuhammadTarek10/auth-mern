@@ -2,6 +2,11 @@ export const Environment = {
   // App
   NODE_ENV: 'app.env',
   PORT: 'app.port',
+
+  // Frontend
+  FRONTEND_URL: 'app.frontend_url',
+  FRONTEND_URL_PROD: 'app.frontend_url_prod',
+
   // Database
   DATABASE_URL: 'database.uri',
 

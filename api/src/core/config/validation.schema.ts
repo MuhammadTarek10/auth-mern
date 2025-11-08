@@ -7,6 +7,10 @@ export const validationSchema = z.object({
     .default('development'),
   APP_PORT: z.coerce.number().default(3000),
 
+  // Frontend
+  FRONTEND_URL: z.string().min(1, { message: 'FRONTEND_URL is required' }),
+  FRONTEND_URL_PROD: z.string().optional(),
+
   // Database
   DATABASE_URL: z.string().min(1, { message: 'DATABASE_URL is required' }),
 
