@@ -3,7 +3,7 @@ import {
   Injectable,
   UnauthorizedException,
 } from '@nestjs/common';
-import { ConfigService } from '@nestjs/config';
+import { PinoLogger } from 'nestjs-pino';
 import { HashService } from 'src/core/utils/hash.service';
 import { TokenService } from 'src/core/utils/token/token.service';
 import {
@@ -23,12 +23,20 @@ export class AuthService {
     private readonly sessionRepository: SessionRepository,
     private readonly tokenService: TokenService,
     private readonly hashService: HashService,
-    private readonly config: ConfigService,
-  ) {}
+    private readonly logger: PinoLogger,
+  ) {
+    this.logger.setContext(AuthService.name);
+  }
 
   async signUp(dto: SignUpDto): Promise<TokenResponse> {
     const exists = await this.usersService.findByEmail(dto.email);
-    if (exists) throw new ConflictException('User already exists');
+    if (exists) {
+      this.logger.warn(
+        { email: dto.email },
+        `Sign-up attempt failed: User already exists`,
+      );
+      throw new ConflictException('User already exists');
+    }
 
     const hashedPassword = await this.hashService.hash(dto.password);
 
@@ -68,6 +76,11 @@ export class AuthService {
 
     const accessTokenExpiresIn = this.tokenService.getAccessTokenExpiresIn();
 
+    this.logger.info(
+      { userId, email: user.email, sessionId },
+      `User signed up successfully`,
+    );
+
     return {
       access_token: accessToken,
       refresh_token: refreshToken,
@@ -105,6 +118,11 @@ export class AuthService {
 
     const accessTokenExpiresIn = this.tokenService.getAccessTokenExpiresIn();
 
+    this.logger.info(
+      { userId, email: user.email, sessionId },
+      `User signed in successfully`,
+    );
+
     return {
       access_token: accessToken,
       refresh_token: refreshToken,
@@ -116,16 +134,31 @@ export class AuthService {
     const { id, sessionId, refreshToken, email } = payload;
 
     const user = await this.usersService.findById(id);
-    if (!user) throw new UnauthorizedException('User not found');
+    if (!user) {
+      this.logger.warn({ userId: id }, `Token refresh failed: User not found`);
+      throw new UnauthorizedException('User not found');
+    }
 
     const session = await this.sessionRepository.findById(sessionId);
-    if (!session) throw new UnauthorizedException('Session not found');
+    if (!session) {
+      this.logger.warn(
+        { userId: id, sessionId },
+        `Token refresh failed: Session not found`,
+      );
+      throw new UnauthorizedException('Session not found');
+    }
 
     const isValid = await this.hashService.verify(
       refreshToken,
       session.refreshTokenHash,
     );
-    if (!isValid) throw new UnauthorizedException('Invalid refresh token');
+    if (!isValid) {
+      this.logger.warn(
+        { userId: id, sessionId },
+        `Token refresh failed: Invalid refresh token`,
+      );
+      throw new UnauthorizedException('Invalid refresh token');
+    }
 
     const { access_token, refresh_token } =
       await this.tokenService.generateTokens({
@@ -142,6 +175,11 @@ export class AuthService {
 
     const expiresIn = this.tokenService.getAccessTokenExpiresIn();
 
+    this.logger.info(
+      { userId: id, email, sessionId },
+      `Token refreshed successfully`,
+    );
+
     return {
       access_token: access_token,
       refresh_token: refresh_token,
@@ -151,20 +189,45 @@ export class AuthService {
 
   async signOut(user: UserWithSession): Promise<void> {
     const session = await this.sessionRepository.findById(user.sessionId);
-    if (!session) throw new UnauthorizedException('Session not found');
+    if (!session) {
+      this.logger.warn(
+        { userId: user._id, sessionId: user.sessionId },
+        `Sign-out failed: Session not found`,
+      );
+      throw new UnauthorizedException('Session not found');
+    }
 
     await this.sessionRepository.deleteSession(user.sessionId);
+
+    this.logger.info(
+      { userId: user._id, email: user.email, sessionId: user.sessionId },
+      `User signed out successfully`,
+    );
   }
 
   async validateUser(email: string, password: string) {
     const user = await this.usersService.findWithPassword(email);
-    if (!user || !user.authMethods[0].passwordHash) return null;
+    if (!user || !user.authMethods[0].passwordHash) {
+      this.logger.warn(
+        { email },
+        `Authentication failed: User not found or no password`,
+      );
+      return null;
+    }
 
     const isPasswordValid = await this.hashService.verify(
       password,
       user.authMethods[0].passwordHash,
     );
-    if (!isPasswordValid) return null;
+    if (!isPasswordValid) {
+      this.logger.warn(
+        { email, userId: user._id.toString() },
+        `Authentication failed: Invalid password`,
+      );
+      return null;
+    }
+
+    this.logger.debug({ email, userId: user._id.toString() }, `User validated`);
 
     return user;
   }

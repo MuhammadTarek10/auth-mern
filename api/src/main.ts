@@ -1,15 +1,18 @@
 import { ValidationPipe, VersioningType } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
-import { NestFactory, Reflector } from '@nestjs/core';
+import { NestFactory } from '@nestjs/core';
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
 import cookieParser from 'cookie-parser';
 import basicAuth from 'express-basic-auth';
+import { Logger } from 'nestjs-pino';
 import { AppModule } from './app.module';
 import { Environment } from './core/config/environment';
-import { ResponseInterceptor } from './core/interceptors/response.interceptor';
 
 async function bootstrap() {
-  const app = await NestFactory.create(AppModule);
+  const app = await NestFactory.create(AppModule, { bufferLogs: true });
+
+  app.useLogger(app.get(Logger));
+
   const config = app.get(ConfigService);
   const port = config.getOrThrow<number>(Environment.PORT);
 
@@ -32,8 +35,6 @@ async function bootstrap() {
       transform: true,
     }),
   );
-
-  app.useGlobalInterceptors(new ResponseInterceptor(new Reflector()));
 
   app.enableVersioning({
     type: VersioningType.URI,

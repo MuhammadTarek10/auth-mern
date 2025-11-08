@@ -24,10 +24,13 @@ export class ResponseInterceptor<T>
       this.reflector.get<string>(RESPONSE_MESSAGE_KEY, context.getHandler()) ||
       'Operation successful';
 
-    return next
-      .handle()
-      .pipe(
-        map((data) => new ResponseDto(data, message, ResponseStatus.SUCCESS)),
-      ) as Observable<ResponseDto<T>>;
+    return next.handle().pipe(
+      map((data) => {
+        if (data instanceof ResponseDto) {
+          return data;
+        }
+        return new ResponseDto(data, message, ResponseStatus.SUCCESS);
+      }),
+    ) as Observable<ResponseDto<T>>;
   }
 }

@@ -6,6 +6,9 @@ export const validationSchema = z.object({
     .enum(['development', 'production', 'test'])
     .default('development'),
   APP_PORT: z.coerce.number().default(3000),
+  LOG_LEVEL: z
+    .enum(['error', 'warn', 'info', 'debug', 'trace'])
+    .default('info'),
 
   // Frontend
   FRONTEND_URL: z.string().min(1, { message: 'FRONTEND_URL is required' }),
