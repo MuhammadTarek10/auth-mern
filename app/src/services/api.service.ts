@@ -20,7 +20,6 @@ export class ApiService {
   private refreshSubscribers: Array<(token: string) => void> = [];
 
   private constructor() {
-    // Create an Axios instance for use as the client
     this.client = axios.create({
       baseURL: `${Constants.API_URL}/api/${Constants.API_VERSION}`,
       withCredentials: true,
@@ -34,29 +33,21 @@ export class ApiService {
   }
 
   private setupInterceptors() {
-    // Response interceptor for handling 401 errors and token refresh
     this.client.interceptors.response.use(
       (response) => response,
       async (error: AxiosError) => {
         const originalRequest = error.config as any;
 
-        // Don't attempt refresh for the refresh endpoint itself or sign-in/sign-up
         const isRefreshEndpoint = originalRequest.url?.includes(
           Constants.AUTH_ENDPOINTS.REFRESH_TOKEN
         );
-        const isAuthEndpoint =
-          originalRequest.url?.includes("/auth/sign-in") ||
-          originalRequest.url?.includes("/auth/sign-up");
 
-        // If error is 401 and we haven't retried yet and it's not the refresh/auth endpoint
         if (
           error.response?.status === 401 &&
           !originalRequest._retry &&
-          !isRefreshEndpoint &&
-          !isAuthEndpoint
+          !isRefreshEndpoint
         ) {
           if (this.isRefreshing) {
-            // If already refreshing, wait for it to complete
             return new Promise((resolve) => {
               this.refreshSubscribers.push(() => {
                 resolve(this.client(originalRequest));
@@ -68,19 +59,16 @@ export class ApiService {
           this.isRefreshing = true;
 
           try {
-            // Attempt to refresh token
             await this.client.post(Constants.AUTH_ENDPOINTS.REFRESH_TOKEN);
 
             this.isRefreshing = false;
             this.onRefreshSuccess();
 
-            // Retry the original request
             return this.client(originalRequest);
           } catch (refreshError) {
             this.isRefreshing = false;
             this.refreshSubscribers = [];
 
-            // Trigger logout event for auth provider to handle
             window.dispatchEvent(new CustomEvent("auth:logout"));
 
             return Promise.reject(refreshError);
@@ -108,7 +96,6 @@ export class ApiService {
     if (axios.isAxiosError(error)) {
       const axiosError = error as AxiosError<ApiResponse<unknown>>;
 
-      // Extract error message from backend response
       const errorMessage =
         axiosError.response?.data?.message ||
         axiosError.response?.data?.error ||
@@ -122,7 +109,6 @@ export class ApiService {
       );
     }
 
-    // Handle non-axios errors
     if (error instanceof Error) {
       throw new ApiError(error.message);
     }

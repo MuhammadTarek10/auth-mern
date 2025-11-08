@@ -35,12 +35,10 @@ export function AuthProvider({ children }: Props) {
   const [isLoading, setIsLoading] = useState(true);
   const [refreshTimer, setRefreshTimer] = useState<NodeJS.Timeout | null>(null);
 
-  // Initialize auth on mount - check if user has valid session
   useEffect(() => {
     initializeAuth();
-  }, []); // Run only once on mount
+  }, []);
 
-  // Listen for logout events from the API interceptor
   useEffect(() => {
     const handleLogout = () => {
       setUser(null);
@@ -51,13 +49,10 @@ export function AuthProvider({ children }: Props) {
     return () => {
       window.removeEventListener("auth:logout", handleLogout);
     };
-  }, []); // Set up listener once on mount
+  }, []);
 
-  // Cleanup refresh timer when user logs out
   useEffect(() => {
-    if (!user) {
-      clearRefreshTimer();
-    }
+    if (!user) clearRefreshTimer();
   }, [user]);
 
   const clearRefreshTimer = () => {
@@ -70,14 +65,12 @@ export function AuthProvider({ children }: Props) {
   const scheduleTokenRefresh = (expiresIn: number) => {
     clearRefreshTimer();
 
-    // Refresh 5 minutes before expiration (or at 80% of expiration time, whichever is sooner)
     const refreshBeforeMs = Math.min(5 * 60 * 1000, expiresIn * 1000 * 0.2);
     const refreshIn = expiresIn * 1000 - refreshBeforeMs;
 
     const timer = setTimeout(async () => {
       try {
         const response = await authService.refreshToken();
-        // Schedule next refresh
         if (response.data.expires_in) {
           scheduleTokenRefresh(response.data.expires_in);
         }
@@ -91,7 +84,6 @@ export function AuthProvider({ children }: Props) {
 
   const initializeAuth = async () => {
     try {
-      // Try to fetch profile to restore session
       const response = await userService.getProfile();
       setUser(response.data);
     } catch (error) {
@@ -106,11 +98,9 @@ export function AuthProvider({ children }: Props) {
       const authResponse = await authService.signIn(data.email, data.password);
       toast.success(authResponse?.message || "Sign in successful");
 
-      // Fetch user profile after successful sign in
       const profileResponse = await userService.getProfile();
       setUser(profileResponse.data);
 
-      // Schedule proactive token refresh
       if (authResponse.data.expires_in) {
         scheduleTokenRefresh(authResponse.data.expires_in);
       }
@@ -131,11 +121,9 @@ export function AuthProvider({ children }: Props) {
       );
       toast.success(authResponse?.message || "Sign up successful");
 
-      // Fetch user profile after successful sign up
       const profileResponse = await userService.getProfile();
       setUser(profileResponse.data);
 
-      // Schedule proactive token refresh
       if (authResponse.data.expires_in) {
         scheduleTokenRefresh(authResponse.data.expires_in);
       }
@@ -154,7 +142,6 @@ export function AuthProvider({ children }: Props) {
       clearRefreshTimer();
       toast.success("Signed out successfully");
     } catch (error: unknown) {
-      // Even if API call fails, clear user state
       setUser(null);
       clearRefreshTimer();
       const errorMessage =

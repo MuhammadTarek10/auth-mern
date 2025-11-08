@@ -1,0 +1,15 @@
+export function getInitials(name?: string | null): string {
+  if (!name) return "U";
+  return name
+    .split(" ")
+    .map((n) => n[0])
+    .join("")
+    .toUpperCase()
+    .slice(0, 2);
+}
+
+export function getFirstName(name?: string | null): string {
+  if (!name) return "User";
+  return name.split(" ")[0];
+}
+

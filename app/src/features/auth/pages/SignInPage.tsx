@@ -7,9 +7,7 @@ import { useAuth } from "@/hooks/use-auth";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useNavigate } from "@tanstack/react-router";
 import { useForm } from "react-hook-form";
-import { SignInFooter } from "../components/SignInFooter";
-import { SignInForm } from "../components/SignInForm";
-import { SignInHeader } from "../components/SignInHeader";
+import { SignInFooter, SignInForm, SignInHeader } from "../components";
 
 export function SignInPage() {
   const form = useForm<SignInSchema>({
