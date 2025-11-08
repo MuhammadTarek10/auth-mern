@@ -112,4 +112,3 @@ export function QuickActionsCard({ onSignOut }: QuickActionsCardProps) {
     </Card>
   );
 }
-

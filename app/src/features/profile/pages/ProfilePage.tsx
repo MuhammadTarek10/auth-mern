@@ -5,7 +5,7 @@ import {
   TabsTrigger,
 } from "@/common/components/ui/tabs";
 import { useAuth } from "@/hooks/use-auth";
-import { useLoaderData } from "@tanstack/react-router";
+import { useLoaderData, useNavigate } from "@tanstack/react-router";
 import { AccountStatsCard } from "../components/AccountStatsCard";
 import { ProfileHeader } from "../components/ProfileHeader";
 import { ProfileInfoCard } from "../components/ProfileInfoCard";
@@ -15,6 +15,12 @@ import { SettingsCard } from "../components/SettingsCard";
 export function ProfilePage() {
   const { user } = useLoaderData({ from: "/(main)/profile" });
   const { signOut } = useAuth();
+  const navigate = useNavigate();
+
+  const handleSignOut = async () => {
+    await signOut();
+    navigate({ to: "/sign-in" });
+  };
 
   return (
     <div className="min-h-screen bg-linear-to-br from-background via-green-50/30 to-emerald-50/30 dark:from-background dark:via-green-950/20 dark:to-emerald-950/20">
@@ -33,7 +39,7 @@ export function ProfilePage() {
             <TabsContent value="overview" className="space-y-6">
               <div className="grid gap-6 md:grid-cols-2">
                 <AccountStatsCard user={user} />
-                <QuickActionsCard onSignOut={signOut} />
+                <QuickActionsCard onSignOut={handleSignOut} />
               </div>
             </TabsContent>
 
