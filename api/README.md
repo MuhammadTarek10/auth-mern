@@ -38,6 +38,18 @@ This project serves as a **robust, scalable authentication system** designed to 
 - **Comprehensive Error Handling** - Descriptive error messages and appropriate HTTP status codes
 - **CORS Support** - Configurable for multiple frontend origins
 
+### Logging & Monitoring
+
+- **Structured Logging** - JSON-based logging with Pino (high-performance logger)
+- **Request/Response Logging** - Automatic HTTP request and response tracking with duration
+- **Error Logging** - Comprehensive error logging with stack traces
+- **Sensitive Data Redaction** - Automatic redaction of passwords, tokens, and cookies
+- **File-Based Logging** - Separate error.log and combined.log files in production
+- **Pretty Logging** - Colorized, human-readable logs in development
+- **Log Levels** - Configurable log levels (error, warn, info, debug, trace)
+- **Context Tracking** - User ID, IP address, and user agent tracking
+- **Silent Test Mode** - Logs disabled during testing
+
 ### Development & Testing
 
 - **End-to-End Testing** - Comprehensive e2e tests with Pactum
@@ -78,6 +90,13 @@ This project serves as a **robust, scalable authentication system** designed to 
 
 - **[@nestjs/swagger](https://docs.nestjs.com/openapi/introduction)** v11 - OpenAPI/Swagger integration
 - **[express-basic-auth](https://www.npmjs.com/package/express-basic-auth)** - Swagger UI protection
+
+### Logging
+
+- **[Pino](https://getpino.io/)** - Fast and low overhead Node.js logger
+- **[nestjs-pino](https://www.npmjs.com/package/nestjs-pino)** v4 - NestJS integration for Pino
+- **[pino-pretty](https://github.com/pinojs/pino-pretty)** v13 - Pretty print for Pino logs (development)
+- **[pino-http](https://github.com/pinojs/pino-http)** v10 - HTTP logger for Pino
 
 ### Testing
 
@@ -134,6 +153,7 @@ api/
 │   │   │   ├── database.config.ts
 │   │   │   ├── environment.ts
 │   │   │   ├── jwt.config.ts
+│   │   │   ├── logger.config.ts   # Pino logger configuration
 │   │   │   ├── swagger.config.ts
 │   │   │   └── validation.schema.ts
 │   │   ├── database/              # Database module
@@ -143,8 +163,13 @@ api/
 │   │   ├── decorators/            # Custom decorators
 │   │   │   ├── get-user.decorator.ts
 │   │   │   └── response-message.decorator.ts
-│   │   ├── interceptors/          # Response interceptors
-│   │   │   └── response.interceptor.ts
+│   │   ├── filters/               # Exception filters
+│   │   │   └── http-exception.filter.ts # Global error handler with logging
+│   │   ├── interceptors/          # Interceptors
+│   │   │   ├── logging.interceptor.ts   # HTTP request/response logger
+│   │   │   └── response.interceptor.ts  # Response formatter
+│   │   ├── logger/                # Logger module
+│   │   │   └── logger.module.ts   # Pino logger module
 │   │   └── utils/                 # Utility services
 │   │       ├── hash.service.ts    # Password hashing (Argon2)
 │   │       ├── token/             # Token management
@@ -158,6 +183,10 @@ api/
 │   ├── auth.e2e-spec.ts          # Authentication flow tests
 │   ├── setup.ts                   # Test setup and configuration
 │   └── jest-e2e.json             # Jest e2e configuration
+│
+├── logs/                          # Log files (auto-generated in production)
+│   ├── error.log                 # Error logs
+│   └── combined.log              # All logs
 │
 ├── docker-compose.yml             # MongoDB Docker configuration
 ├── package.json                   # Dependencies and scripts
@@ -303,6 +332,7 @@ Create environment files:
 # Application
 NODE_ENV=development
 APP_PORT=3000
+LOG_LEVEL=info
 
 # Frontend URLs
 FRONTEND_URL=http://localhost:5173
@@ -327,6 +357,7 @@ JWT_REFRESH_EXPIRES_IN=604800
 ```env
 NODE_ENV=test
 APP_PORT=3334
+LOG_LEVEL=silent
 FRONTEND_URL=http://localhost:5173
 DATABASE_URL=mongodb://root:password@localhost:27017/auth-test-db?authSource=admin
 SWAGGER_USER=admin
@@ -342,6 +373,7 @@ JWT_REFRESH_EXPIRES_IN=604800
 ```env
 NODE_ENV=production
 APP_PORT=3000
+LOG_LEVEL=info
 FRONTEND_URL=https://your-frontend-domain.com
 FRONTEND_URL_PROD=https://your-production-domain.com
 DATABASE_URL=mongodb+srv://username:password@cluster.mongodb.net/auth-db
@@ -597,6 +629,89 @@ All tests are automated and run in an isolated test database. The test suite inc
 - ✅ **No Hardcoded Secrets** - All secrets from environment
 - ✅ **Swagger Authentication** - Basic auth protecting API docs
 
+## 📊 Logging System
+
+The application uses **Pino**, a high-performance JSON logger, for comprehensive logging and monitoring.
+
+### Features
+
+- **JSON Logging**: Structured logs for easy parsing and analysis
+- **Pretty Printing**: Human-readable, colorized logs in development
+- **File Logging**: Separate error and combined log files in production
+- **Sensitive Data Redaction**: Automatically redacts passwords, tokens, authorization headers, and cookies
+- **Request/Response Tracking**: Logs all HTTP requests with duration, status codes, and user context
+- **Error Logging**: Comprehensive error logging with stack traces for server errors
+- **Performance Monitoring**: Track request duration and identify slow endpoints
+- **Context Enrichment**: Automatic logging of user ID, IP address, and user agent
+
+### Log Format
+
+**Development** (Pretty printed):
+
+```
+[10:30:45.123] INFO (HTTP): Incoming request: GET /api/v1/users/profile
+    method: "GET"
+    url: "/api/v1/users/profile"
+    userId: "507f1f77bcf86cd799439011"
+    ip: "::1"
+```
+
+**Production** (JSON):
+
+```json
+{
+  "level": 30,
+  "time": 1699459845123,
+  "pid": 12345,
+  "context": "HTTP",
+  "method": "GET",
+  "url": "/api/v1/users/profile",
+  "statusCode": 200,
+  "duration": 45,
+  "userId": "507f1f77bcf86cd799439011",
+  "msg": "Outgoing response: GET /api/v1/users/profile 200 - 45ms"
+}
+```
+
+### Log Files
+
+In production, logs are automatically written to:
+
+- **`logs/error.log`** - Contains only error-level logs (status >= 500)
+- **`logs/combined.log`** - Contains all logs (info, warn, error)
+
+Both files use append mode and should be rotated using external tools like `logrotate` or cloud-based log management services.
+
+### Sensitive Data Protection
+
+The following data is automatically redacted from logs:
+
+- `req.headers.authorization` - Bearer tokens
+- `req.headers.cookie` - HTTP-only cookies
+- `req.body.password` - User passwords
+- `req.body.confirmPassword` - Password confirmations
+
+Redacted values appear as `[REDACTED]` in logs.
+
+### Using the Logger in Code
+
+```typescript
+import { PinoLogger } from 'nestjs-pino';
+
+@Injectable()
+export class YourService {
+  constructor(private readonly logger: PinoLogger) {
+    this.logger.setContext(YourService.name);
+  }
+
+  someMethod() {
+    this.logger.info('This is an info message');
+    this.logger.warn({ userId: '123' }, 'Warning with context');
+    this.logger.error({ error: err }, 'Error occurred');
+  }
+}
+```
+
 ## 🛠 Configuration
 
 ### Environment Variables
@@ -605,6 +720,7 @@ All tests are automated and run in an isolated test database. The test suite inc
 | ------------------------ | ------ | --------------------------- | ------------- | -------- |
 | `NODE_ENV`               | string | Environment mode            | `development` | ✅       |
 | `APP_PORT`               | number | Application port            | `3000`        | ✅       |
+| `LOG_LEVEL`              | string | Logging level (see below)   | `info`        | ❌       |
 | `FRONTEND_URL`           | string | Frontend development URL    | -             | ✅       |
 | `FRONTEND_URL_PROD`      | string | Frontend production URL     | -             | ❌       |
 | `DATABASE_URL`           | string | MongoDB connection string   | -             | ✅       |
@@ -614,6 +730,17 @@ All tests are automated and run in an isolated test database. The test suite inc
 | `JWT_ACCESS_EXPIRES_IN`  | number | Access token TTL (seconds)  | `3600`        | ✅       |
 | `JWT_REFRESH_SECRET`     | string | JWT refresh token secret    | -             | ✅       |
 | `JWT_REFRESH_EXPIRES_IN` | number | Refresh token TTL (seconds) | `604800`      | ✅       |
+
+### Log Levels
+
+The `LOG_LEVEL` environment variable controls the verbosity of logging:
+
+- **`silent`** - No logs (recommended for testing)
+- **`error`** - Only error messages
+- **`warn`** - Warnings and errors
+- **`info`** - Informational messages, warnings, and errors (recommended for production)
+- **`debug`** - Debug information and above (development)
+- **`trace`** - Most verbose, all logs (development/troubleshooting)
 
 ### Token Expiration Guidelines
 
@@ -662,7 +789,9 @@ Before deploying to production:
 - [ ] Use HTTPS for all communications
 - [ ] Set strong Swagger credentials
 - [ ] Enable MongoDB authentication
-- [ ] Set up proper logging and monitoring
+- [ ] Configure appropriate LOG_LEVEL (info for production)
+- [ ] Review log files location and rotation strategy
+- [ ] Set up log aggregation service (optional: Datadog, CloudWatch, etc.)
 - [ ] Configure firewall rules
 - [ ] Enable rate limiting (future enhancement)
 - [ ] Set up automated backups for MongoDB
@@ -699,15 +828,7 @@ The following features are planned for future development:
 - Secure password reset flow
 - Password reset email templates
 
-### 3. 📊 Logging & Monitoring
-
-- Structured logging with Winston or Pino
-- Audit logs for security events
-- Request/response logging
-- Error tracking and monitoring
-- Performance metrics
-
-### 4. 🚦 Rate Limiting
+### 3. 🚦 Rate Limiting
 
 - Authentication endpoint rate limiting
 - IP-based rate limiting
@@ -715,7 +836,7 @@ The following features are planned for future development:
 - Brute force protection
 - Account lockout after failed attempts
 
-### 5. 🌐 Social Authentication (OAuth)
+### 4. 🌐 Social Authentication (OAuth)
 
 - Google OAuth integration
 - GitHub OAuth integration
