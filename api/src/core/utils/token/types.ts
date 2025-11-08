@@ -1,3 +1,5 @@
+import { User } from 'src/users/schemas/user.schema';
+
 export interface TokenPayload {
   id: string;
   email: string;
@@ -12,7 +14,7 @@ export interface RefreshTokenPayload extends TokenPayload {
 export interface TokenResponse {
   access_token: string;
   refresh_token: string;
-  expires_in: string;
+  expires_in: number;
 }
 
 export interface UserWithSession extends User {

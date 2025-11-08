@@ -7,7 +7,7 @@ import { UtilsModule } from './core/utils/utils.module';
 import { UsersModule } from './users/users.module';
 
 @Module({
-  imports: [DatabaseModule, ConfigModule, UsersModule, AuthModule, UtilsModule],
+  imports: [DatabaseModule, ConfigModule, AuthModule, UsersModule, UtilsModule],
   providers: [AppService],
 })
 export class AppModule {}

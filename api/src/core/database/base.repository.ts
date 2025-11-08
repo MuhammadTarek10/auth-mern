@@ -31,10 +31,7 @@ export abstract class BaseRepository<T> {
     }
   }
 
-  async findById(
-    id: string,
-    projection?: ProjectionType<T>,
-  ): Promise<T | null> {
+  async findById(id: string, projection?: ProjectionType<T>) {
     try {
       return await this.model
         .findById(new Types.ObjectId(id), projection)
@@ -44,7 +41,7 @@ export abstract class BaseRepository<T> {
     }
   }
 
-  async create(data: Partial<T>): Promise<T> {
+  async create(data: Partial<T>) {
     try {
       return await this.model.create(data);
     } catch (error) {
@@ -52,7 +49,7 @@ export abstract class BaseRepository<T> {
     }
   }
 
-  async createMany(data: T[]): Promise<T[]> {
+  async createMany(data: T[]) {
     try {
       const created = await this.model.insertMany(data);
       return created;
@@ -61,7 +58,7 @@ export abstract class BaseRepository<T> {
     }
   }
 
-  async update(id: string, data: Partial<T>): Promise<T | null> {
+  async update(id: string, data: Partial<T>) {
     try {
       return await this.model
         .findByIdAndUpdate(new Types.ObjectId(id), data, {
@@ -73,7 +70,7 @@ export abstract class BaseRepository<T> {
     }
   }
 
-  async updateMany(query: FilterQuery<T>, data: Partial<T>): Promise<void> {
+  async updateMany(query: FilterQuery<T>, data: Partial<T>) {
     try {
       await this.model.updateMany(query, data).exec();
     } catch (error) {
@@ -81,7 +78,7 @@ export abstract class BaseRepository<T> {
     }
   }
 
-  async delete(id: string): Promise<T | null> {
+  async delete(id: string) {
     try {
       return await this.model.findByIdAndDelete(new Types.ObjectId(id)).exec();
     } catch (error) {
@@ -89,7 +86,7 @@ export abstract class BaseRepository<T> {
     }
   }
 
-  async deleteMany(query: FilterQuery<T>): Promise<void> {
+  async deleteMany(query: FilterQuery<T>) {
     try {
       await this.model.deleteMany(query).exec();
     } catch (error) {
@@ -97,7 +94,7 @@ export abstract class BaseRepository<T> {
     }
   }
 
-  async count(query: FilterQuery<T>): Promise<number> {
+  async count(query: FilterQuery<T>) {
     try {
       return await this.model.countDocuments(query).exec();
     } catch (error) {
@@ -105,7 +102,7 @@ export abstract class BaseRepository<T> {
     }
   }
 
-  async exists(query: FilterQuery<T>): Promise<boolean> {
+  async exists(query: FilterQuery<T>) {
     try {
       return (await this.model.exists(query).exec()) !== null;
     } catch (error) {
@@ -113,7 +110,7 @@ export abstract class BaseRepository<T> {
     }
   }
 
-  async aggregate(pipeline: PipelineStage[]): Promise<T[]> {
+  async aggregate(pipeline: PipelineStage[]) {
     try {
       return await this.model.aggregate<T>(pipeline).exec();
     } catch (error) {

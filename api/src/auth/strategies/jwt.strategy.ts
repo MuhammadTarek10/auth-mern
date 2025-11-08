@@ -19,8 +19,12 @@ export class JwtStrategy extends PassportStrategy(Strategy, 'jwt') {
 
   async validate(payload: TokenPayload): Promise<UserWithSession> {
     const user = await this.usersService.findById(payload.id);
-    if (user)
-      return { ...user, sessionId: payload.sessionId } as UserWithSession;
+    if (user) {
+      return {
+        ...user.toObject(),
+        sessionId: payload.sessionId,
+      } as UserWithSession;
+    }
 
     throw new UnauthorizedException(
       'You are not authorized to access this resource',

@@ -58,7 +58,8 @@ export class TokenService {
         },
         {
           secret: this.config.getOrThrow(Environment.JWT_ACCESS_SECRET),
-          expiresIn: this.config.getOrThrow(Environment.JWT_ACCESS_EXPIRES_IN),
+          expiresIn:
+            this.config.getOrThrow(Environment.JWT_ACCESS_EXPIRES_IN) * 1000,
         },
       ),
       this.jwtService.signAsync(
@@ -68,7 +69,8 @@ export class TokenService {
         },
         {
           secret: this.config.getOrThrow(Environment.JWT_REFRESH_SECRET),
-          expiresIn: this.config.getOrThrow(Environment.JWT_REFRESH_EXPIRES_IN),
+          expiresIn:
+            this.config.getOrThrow(Environment.JWT_REFRESH_EXPIRES_IN) * 1000,
         },
       ),
     ]);

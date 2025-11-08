@@ -8,6 +8,7 @@ import { HashService } from 'src/core/utils/hash.service';
 import { TokenService } from 'src/core/utils/token/token.service';
 import {
   RefreshTokenPayload,
+  TokenResponse,
   UserWithSession,
 } from 'src/core/utils/token/types';
 import { User } from 'src/users/schemas/user.schema';
@@ -25,7 +26,7 @@ export class AuthService {
     private readonly config: ConfigService,
   ) {}
 
-  async signUp(dto: SignUpDto) {
+  async signUp(dto: SignUpDto): Promise<TokenResponse> {
     const exists = await this.usersService.findByEmail(dto.email);
     if (exists) throw new ConflictException('User already exists');
 
@@ -74,7 +75,7 @@ export class AuthService {
     };
   }
 
-  async signIn(user: User) {
+  async signIn(user: User): Promise<TokenResponse> {
     const userId = user._id.toString();
 
     const session = await this.sessionRepository.create({
@@ -111,7 +112,7 @@ export class AuthService {
     };
   }
 
-  async refresh(payload: RefreshTokenPayload) {
+  async refresh(payload: RefreshTokenPayload): Promise<TokenResponse> {
     const { id, sessionId, refreshToken, email } = payload;
 
     const user = await this.usersService.findById(id);
@@ -148,14 +149,14 @@ export class AuthService {
     };
   }
 
-  async signOut(user: UserWithSession) {
+  async signOut(user: UserWithSession): Promise<void> {
     const session = await this.sessionRepository.findById(user.sessionId);
     if (!session) throw new UnauthorizedException('Session not found');
 
     await this.sessionRepository.deleteSession(user.sessionId);
   }
 
-  async validateUser(email: string, password: string): Promise<User | null> {
+  async validateUser(email: string, password: string) {
     const user = await this.usersService.findWithPassword(email);
     if (!user || !user.authMethods[0].passwordHash) return null;
 
@@ -168,7 +169,7 @@ export class AuthService {
     return user;
   }
 
-  private getExpiresAt(type: 'access' | 'refresh') {
+  private getExpiresAt(type: 'access' | 'refresh'): Date {
     const now = new Date();
     const expiresIn = Number(
       type === 'access'

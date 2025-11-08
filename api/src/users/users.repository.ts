@@ -11,15 +11,15 @@ export class UsersRepository extends BaseRepository<User> {
     super(userModel);
   }
 
-  async findByEmail(email: string): Promise<User | null> {
+  async findByEmail(email: string) {
     return this.findOne({ email });
   }
 
-  async findByAuthMethod(authMethod: AuthMethod): Promise<User | null> {
+  async findByAuthMethod(authMethod: AuthMethod) {
     return this.findOne({ 'authMethods.provider': authMethod.provider });
   }
 
-  async findWithPassword(email: string): Promise<User | null> {
+  async findWithPassword(email: string) {
     return await this.userModel
       .findOne({ email })
       .select('+authMethods')
