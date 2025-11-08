@@ -5,6 +5,7 @@ import ReactDOM from "react-dom/client";
 // Import the generated route tree
 import { routeTree } from "./routeTree.gen";
 
+import { Toaster } from "sonner";
 import "./App.css";
 import { AuthProvider, useAuth } from "./hooks/use-auth.tsx";
 import reportWebVitals from "./reportWebVitals.ts";
@@ -40,6 +41,7 @@ if (rootElement && !rootElement.innerHTML) {
     <StrictMode>
       <AuthProvider>
         <App />
+        <Toaster />
       </AuthProvider>
     </StrictMode>
   );

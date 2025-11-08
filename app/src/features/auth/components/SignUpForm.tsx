@@ -1,6 +1,7 @@
 import { CustomFormField } from "@/common/components/forms/CustomFormField";
 import type { SignUpSchema } from "@/common/components/forms/validations/auth";
-import { CardContent } from "@/common/components/ui/card";
+import { Button } from "@/common/components/ui/button";
+import { CardContent, CardFooter } from "@/common/components/ui/card";
 import { Form } from "@/common/components/ui/form";
 import type { UseFormReturn } from "react-hook-form";
 
@@ -46,6 +47,11 @@ export function SignUpForm({ form, onSubmit }: Props) {
             inputType="password"
           />
         </CardContent>
+        <CardFooter className="flex flex-col space-y-4">
+          <Button type="submit" className="w-full" size="lg">
+            Sign Up
+          </Button>
+        </CardFooter>
       </form>
     </Form>
   );

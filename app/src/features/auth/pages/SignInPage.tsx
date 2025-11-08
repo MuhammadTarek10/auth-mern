@@ -1,11 +1,11 @@
-"use client";
-
 import {
   signInSchema,
   type SignInSchema,
 } from "@/common/components/forms/validations/auth";
 import { Card } from "@/common/components/ui/card";
+import { useAuth } from "@/hooks/use-auth";
 import { zodResolver } from "@hookform/resolvers/zod";
+import { useNavigate } from "@tanstack/react-router";
 import { useForm } from "react-hook-form";
 import { SignInFooter } from "../components/SignInFooter";
 import { SignInForm } from "../components/SignInForm";
@@ -14,10 +14,29 @@ import { SignInHeader } from "../components/SignInHeader";
 export function SignInPage() {
   const form = useForm<SignInSchema>({
     resolver: zodResolver(signInSchema),
+    defaultValues: {
+      email: "",
+      password: "",
+    },
   });
 
-  const onSubmit = (data: SignInSchema) => {
-    console.log({ data });
+  const { signIn } = useAuth();
+  const navigate = useNavigate();
+
+  const onSubmit = async (data: SignInSchema) => {
+    try {
+      await signIn(data);
+      queueMicrotask(() => {
+        navigate({ to: "/profile" });
+      });
+    } catch (error) {
+      const errorMessage =
+        error instanceof Error ? error.message : "An error occurred";
+      form.setError("root", {
+        type: "manual",
+        message: errorMessage,
+      });
+    }
   };
 
   return (

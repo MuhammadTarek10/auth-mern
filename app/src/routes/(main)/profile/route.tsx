@@ -1,9 +1,16 @@
-import { createFileRoute } from "@tanstack/react-router";
+import { ProfilePage } from "@/features/profile/pages/ProfilePage";
+import { createFileRoute, redirect } from "@tanstack/react-router";
 
 export const Route = createFileRoute("/(main)/profile")({
-  component: RouteComponent,
+  component: ProfilePage,
+  beforeLoad: async ({ context }) => {
+    if (!context.auth.user) {
+      throw redirect({ to: "/sign-in" });
+    }
+  },
+  loader: async ({ context }) => {
+    return {
+      user: context.auth.user,
+    };
+  },
 });
-
-function RouteComponent() {
-  return <div>Hello "/_auth/profile"!</div>;
-}
