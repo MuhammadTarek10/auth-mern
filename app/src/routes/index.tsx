@@ -1,9 +1,14 @@
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, redirect } from "@tanstack/react-router";
 import "../App.css";
 import logo from "../logo.svg";
 
 export const Route = createFileRoute("/")({
   component: App,
+  beforeLoad: async ({ context }) => {
+    if (!context.auth.user) {
+      throw redirect({ to: "/sign-in" });
+    }
+  },
 });
 
 function App() {

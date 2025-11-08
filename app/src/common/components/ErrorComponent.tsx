@@ -4,7 +4,7 @@ interface Props {
   error: Error;
 }
 
-export function ErrorPage({ error }: Props) {
+export function ErrorComponent({ error }: Props) {
   const navigate = useNavigate();
 
   return (
